@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0A0A08"/>
+<title>Auto Check-in · Salon Men Saúl Fino</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --gold:#C9A84C;--gold-l:#E8CE82;--gold-d:#9A7A30;
+  --black:#0A0A08;--b2:#111110;--b3:#1A1A17;--b4:#222220;
+  --g1:#2C2C28;--g2:#3E3E38;--g3:#666660;--g4:#9A9A90;--g5:#C8C8C0;
+  --white:#F8F7F3;--green:#22C55E;
+  --ff-d:'Cormorant Garamond',Georgia,serif;
+  --ff-b:'Outfit',system-ui,sans-serif;
+  --px:20px;--tap:54px;--r:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--ff-b);background:var(--black);color:var(--white);
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom);
+  min-height:100dvh;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:var(--ff-b);cursor:pointer;border:none;background:none;-webkit-tap-highlight-color:transparent}
+input{font-family:var(--ff-b);-webkit-appearance:none}
+::-webkit-scrollbar{display:none}
+
+/* SCREENS */
+.screen{display:none;min-height:100dvh;animation:fadeUp .3s ease both}
+.screen.active{display:flex;flex-direction:column}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* TOPBAR */
+.topbar{
+  flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--px);height:60px;
+  background:rgba(10,10,8,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(201,168,76,.1);
+  position:relative;
+}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4}
+.tb-brand{display:flex;align-items:center;gap:10px}
+.tb-badge{width:34px;height:34px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--ff-d);font-weight:700;font-size:12px;color:var(--black);flex-shrink:0}
+.tb-name{font-family:var(--ff-d);font-size:15px;font-weight:600}
+.tb-sub{font-size:9px;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+.back-btn{min-width:40px;min-height:40px;border-radius:50%;background:var(--g1);color:var(--g5);display:flex;align-items:center;justify-content:center;font-size:18px;border:none;cursor:pointer}
+
+/* STEP PROGRESS */
+.progress-bar{
+  flex-shrink:0;padding:0 var(--px);height:4px;
+  background:var(--g1);position:relative;
+}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));
+  border-radius:2px;transition:width .4s ease;
+}
+.step-labels{
+  flex-shrink:0;display:flex;padding:10px var(--px) 0;gap:0;
+}
+.sl-item{
+  flex:1;text-align:center;font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--g3);padding-bottom:10px;
+  border-bottom:1px solid rgba(255,255,255,.04);
+  transition:color .3s;
+}
+.sl-item.active{color:var(--gold)}
+.sl-item.done{color:var(--g3)}
+
+/* CONTENT AREA */
+.content-area{
+  flex:1;overflow-y:auto;padding:28px var(--px);
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:140px;/* space for fixed nav */
+}
+
+/* STEP HEADING */
+.step-heading{margin-bottom:28px}
+.step-num{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);
+  margin-bottom:10px;
+}
+.step-num::before{content:'';width:16px;height:1px;background:var(--gold)}
+.step-title{font-family:var(--ff-d);font-size:38px;font-weight:300;line-height:1;color:var(--white);margin-bottom:8px}
+.step-title em{font-style:italic;color:var(--gold)}
+.step-sub{font-size:14px;color:var(--g4);line-height:1.5}
+
+/* BOTTOM NAV — fixed */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:var(--b2);border-top:1.5px solid rgba(201,168,76,.15);
+  padding:14px var(--px);
+  padding-bottom:calc(14px + env(safe-area-inset-bottom));
+  display:flex;gap:10px;flex-shrink:0;
+}
+.btn-next{
+  flex:1;min-height:var(--tap);border-radius:var(--r);
+  background:var(--gold);color:var(--black);
+  font-size:15px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .15s;font-family:var(--ff-b);
+}
+.btn-next:active{transform:scale(.97)}
+.btn-next:disabled{background:var(--g1);color:var(--g2);cursor:not-allowed}
+.btn-back{
+  min-width:var(--tap);min-height:var(--tap);border-radius:var(--r);
+  background:var(--g1);color:var(--g5);
+  font-size:20px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.btn-back:active{transform:scale(.95)}
+
+/* ═══════ STEP 1 — NOMBRE ═══════ */
+.name-input-wrap{display:flex;flex-direction:column;gap:10px}
+.name-input{
+  background:var(--b3);border:2px solid rgba(201,168,76,.2);
+  border-radius:var(--r);padding:20px;
+  font-size:28px;font-family:var(--ff-d);color:var(--white);
+  width:100%;outline:none;min-height:72px;
+  -webkit-appearance:none;letter-spacing:.02em;
+  transition:border-color .2s;
+}
+.name-input:focus{border-color:var(--gold)}
+.name-input::placeholder{color:var(--g2)}
+.name-hint{font-size:12px;color:var(--g3);line-height:1.5}
+/* Quick names (regulars) */
+.quick-names{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.qn-btn{
+  padding:10px 16px;border-radius:20px;
+  background:var(--b3);border:1px solid rgba(201,168,76,.2);
+  color:var(--g4);font-size:13px;font-weight:600;cursor:pointer;
+  min-height:40px;transition:all .15s;
+}
+.qn-btn:active{background:rgba(201,168,76,.1);color:var(--gold);border-color:var(--gold)}
+
+/* ═══════ STEP 2 — BARBERO ═══════ */
+.barber-list{display:flex;flex-direction:column;gap:10px}
+.bc-item{
+  display:flex;align-items:center;gap:16px;
+  background:var(--b3);border:2px solid rgba(255,255,255,.07);
+  border-radius:var(--r);padding:16px var(--px);
+  cursor:pointer;min-height:var(--tap);transition:all .18s;
+}
+.bc-item:active{transform:scale(.99)}
+.bc-item.selected{border-color:var(--gold);background:rgba(201,168,76,.06)}
+.bc-av{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--g1);border:1.5px solid rgba(201,168,76,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-d);font-weight:700;font-size:18px;color:var(--gold);
+  flex-shrink:0;
+}
+.bc-item.selected .bc-av{background:var(--gold);color:var(--black);border-color:var(--gold)}
+.bc-info{flex:1}
+.bc-name{font-family:var(--ff-d);font-size:22px;font-weight:600;color:var(--white);line-height:1}
+.bc-spec{font-size:12px;color:var(--g3);margin-top:3px}
+.bc-check{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--gold);color:var(--black);
+  display:none;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;flex-shrink:0;
+}
+.bc-item.selected .bc-check{display:flex}
+.bc-item.unavailable{opacity:.45;pointer-events:none}
+.bc-busy-badge{
+  font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 8px;border-radius:10px;background:rgba(239,68,68,.12);color:#F87171;
+}
+
+/* ═══════ STEP 3 — SERVICIOS ═══════ */
+.svc-check-list{display:flex;flex-direction:column;gap:10px}
+.sci{
+  display:flex;align-items:center;gap:14px;
+  background:var(--b3);border:2px solid rgba(255,255,255,.07);
+  border-radius:var(--r);padding:16px var(--px);
+  cursor:pointer;min-height:var(--tap);transition:all .18s;
+}
+.sci.checked{border-color:var(--gold);background:rgba(201,168,76,.05)}
+.sci:active{transform:scale(.99)}
+.sci-box{
+  width:26px;height:26px;border-radius:7px;
+  border:2px solid rgba(255,255,255,.15);
+  background:transparent;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--black);transition:all .18s;flex-shrink:0;
+}
+.sci.checked .sci-box{background:var(--gold);border-color:var(--gold)}
+.sci-icon{font-size:22px;flex-shrink:0}
+.sci-info{flex:1}
+.sci-name{font-size:16px;font-weight:600;color:var(--white);line-height:1.2;margin-bottom:2px}
+.sci-time{font-size:11px;color:var(--g3)}
+.sci-price{font-family:var(--ff-d);font-size:22px;font-weight:600;color:var(--gold);flex-shrink:0}
+.svc-total-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  margin-top:14px;padding:16px;
+  background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);
+  border-radius:var(--r);
+}
+.svc-total-label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--g4)}
+.svc-total-num{font-family:var(--ff-d);font-size:36px;font-weight:600;color:var(--gold);line-height:1}
+
+/* ═══════ STEP 4 — BEBIDA ═══════ */
+.drink-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dopt{
+  background:var(--b3);border:2px solid rgba(255,255,255,.07);
+  border-radius:var(--r);padding:22px 14px;
+  text-align:center;cursor:pointer;min-height:100px;transition:all .18s;
+}
+.dopt:active{transform:scale(.97)}
+.dopt.selected{border-color:var(--gold);background:rgba(201,168,76,.07)}
+.d-icon{font-size:40px;margin-bottom:10px}
+.d-label{font-size:15px;font-weight:600;color:var(--g5)}
+.d-sublabel{font-size:11px;color:var(--g3);margin-top:4px}
+.oshi-info-card{
+  display:flex;align-items:flex-start;gap:14px;
+  background:var(--b3);border:1px solid rgba(201,168,76,.12);
+  border-radius:var(--r);padding:18px;margin-top:14px;
+}
+.oshi-ic{font-size:28px;flex-shrink:0;margin-top:2px}
+.oshi-t{font-size:13px;color:var(--g4);line-height:1.6}
+.oshi-t strong{color:var(--white)}
+
+/* ═══════ STEP 5 — CONFIRMAR ═══════ */
+.confirm-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
+.confirm-icon-big{font-size:80px;animation:bounce-in .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes bounce-in{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.confirm-title{font-family:var(--ff-d);font-size:44px;font-weight:300;line-height:1;color:var(--white)}
+.confirm-title em{font-style:italic;color:var(--gold)}
+.confirm-sub{font-size:14px;color:var(--g4);line-height:1.6;max-width:300px}
+.confirm-card{
+  width:100%;background:var(--b3);
+  border:1px solid rgba(201,168,76,.2);border-radius:var(--r);
+  overflow:hidden;position:relative;text-align:left;
+}
+.confirm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold))}
+.cc-head{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
+.cc-head-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:2px}
+.cc-client{font-family:var(--ff-d);font-size:26px;font-weight:600;color:var(--white)}
+.cc-rows{padding:4px 0}
+.cc-row{display:flex;justify-content:space-between;align-items:baseline;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.04);font-size:14px}
+.cc-row:last-child{border-bottom:none}
+.cc-label{color:var(--g4);font-size:12px}
+.cc-val{color:var(--white);font-weight:600;text-align:right;max-width:58%;line-height:1.3}
+.cc-val.gold{color:var(--gold);font-family:var(--ff-d);font-size:24px}
+/* Queue display */
+.queue-card{
+  width:100%;background:var(--b3);border:1px solid rgba(255,255,255,.07);
+  border-radius:var(--r);overflow:hidden;
+}
+.qc-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);
+}
+.qc-title{font-family:var(--ff-d);font-size:18px;font-weight:600;color:var(--white)}
+.live-badge{
+  display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--green);
+}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:p 1.5s infinite}
+@keyframes p{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.6)}}
+.queue-rows{display:flex;flex-direction:column}
+.qr{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.04);
+}
+.qr:last-child{border-bottom:none}
+.qr.mine{background:rgba(34,197,94,.04);border-left:3px solid var(--green)}
+.qr.current{background:rgba(201,168,76,.04);border-left:3px solid var(--gold)}
+.q-pos{
+  width:30px;height:30px;border-radius:50%;background:var(--g1);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-d);font-weight:700;font-size:14px;color:var(--g4);flex-shrink:0;
+}
+.qr.current .q-pos{background:var(--gold);color:var(--black)}
+.qr.mine .q-pos{background:var(--green);color:#fff}
+.q-info{flex:1}
+.q-name{font-size:14px;font-weight:600;color:var(--white);margin-bottom:1px}
+.q-meta{font-size:11px;color:var(--g3)}
+.q-status{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+.qs-c{color:var(--gold)}
+.qs-w{color:var(--g3)}
+.qs-m{color:var(--green)}
+/* Wait time */
+.wait-time-card{
+  width:100%;display:flex;align-items:center;gap:20px;
+  background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);
+  border-radius:var(--r);padding:20px 24px;
+}
+.wt-num{font-family:var(--ff-d);font-size:52px;font-weight:600;color:var(--gold);line-height:1}
+.wt-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--g3);margin-top:4px}
+.wt-desc{font-size:13px;color:var(--g4);line-height:1.5;flex:1}
+/* Action buttons on confirm */
+.action-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.action-btn{
+  min-height:var(--tap);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  cursor:pointer;border:none;font-family:var(--ff-b);transition:all .15s;
+}
+.action-btn:active{transform:scale(.97)}
+.ab-wa{background:#25D366;color:#fff}
+.ab-back{background:var(--g1);color:var(--g5)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PANTALLA CHECK-IN — FLUJO DE 5 PASOS
+════════════════════════════════════════════ -->
+<div id="mainScreen" class="screen active">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-brand">
+      <div class="tb-badge">SF</div>
+      <div>
+        <div class="tb-name">Auto Check-in</div>
+        <div class="tb-sub">Salon Men Saúl Fino</div>
+      </div>
+    </div>
+    <a href="saulfino_mobile.html" class="back-btn" title="Volver">✕</a>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width:20%"></div>
+  </div>
+  <div class="step-labels">
+    <div class="sl-item active" id="lbl1">Nombre</div>
+    <div class="sl-item" id="lbl2">Barbero</div>
+    <div class="sl-item" id="lbl3">Servicios</div>
+    <div class="sl-item" id="lbl4">Bebida</div>
+    <div class="sl-item" id="lbl5">Listo</div>
+  </div>
+
+  <!-- CONTENT AREA (all steps) -->
+  <div class="content-area">
+
+    <!-- PASO 1 — NOMBRE -->
+    <div class="step-panel active" id="step1">
+      <div class="step-heading">
+        <div class="step-num">Paso 1 de 4</div>
+        <div class="step-title">Hola,<br/><em>¿cómo te<br/>llamas?</em></div>
+        <p class="step-sub">Tu nombre para avisar a tu barbero cuando estés listo.</p>
+      </div>
+      <div class="name-input-wrap">
+        <input class="name-input" type="text" id="inp_name" placeholder="Tu nombre..." autocomplete="given-name" autocorrect="off" spellcheck="false" oninput="updateNextBtn()"/>
+        <div class="name-hint">Solo necesitamos tu nombre. Sin datos adicionales.</div>
+        <div class="quick-names" id="quickNames">
+          <!-- demo regulars — en producción se cargan desde API -->
+          <button class="qn-btn" onclick="setName('Carlos')">Carlos</button>
+          <button class="qn-btn" onclick="setName('Rodrigo')">Rodrigo</button>
+          <button class="qn-btn" onclick="setName('Felipe')">Felipe</button>
+          <button class="qn-btn" onclick="setName('Sebastián')">Sebastián</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 2 — BARBERO -->
+    <div class="step-panel" id="step2">
+      <div class="step-heading">
+        <div class="step-num">Paso 2 de 4</div>
+        <div class="step-title">¿Con quién<br/>quieres <em>tu<br/>turno?</em></div>
+        <p class="step-sub">Selecciona tu barbero o elige "Cualquiera" para el próximo disponible.</p>
+      </div>
+      <div class="barber-list" id="barberList"><!-- JS --></div>
+    </div>
+
+    <!-- PASO 3 — SERVICIOS -->
+    <div class="step-panel" id="step3">
+      <div class="step-heading">
+        <div class="step-num">Paso 3 de 4</div>
+        <div class="step-title">¿Qué vamos<br/>a hacer <em>hoy?</em></div>
+        <p class="step-sub">Puedes seleccionar más de un servicio. Tu barbero los ve en tiempo real.</p>
+      </div>
+      <div class="svc-check-list" id="svcCheckList"><!-- JS --></div>
+      <div class="svc-total-row" id="svcTotalRow" style="display:none">
+        <span class="svc-total-label">Total estimado</span>
+        <span class="svc-total-num" id="svcTotalNum">$0</span>
+      </div>
+    </div>
+
+    <!-- PASO 4 — BEBIDA -->
+    <div class="step-panel" id="step4">
+      <div class="step-heading">
+        <div class="step-num">Paso 4 de 4</div>
+        <div class="step-title">Tu bebida<br/>de <em>cortesía</em></div>
+        <p class="step-sub">Incluida en cada visita, sin costo adicional.</p>
+      </div>
+      <div class="drink-grid">
+        <div class="dopt" data-d="Café ☕" onclick="selectDrink(this)">
+          <div class="d-icon">☕</div>
+          <div class="d-label">Café</div>
+          <div class="d-sublabel">Capuchino o americano</div>
+        </div>
+        <div class="dopt" data-d="Agua 💧" onclick="selectDrink(this)">
+          <div class="d-icon">💧</div>
+          <div class="d-label">Agua fría</div>
+          <div class="d-sublabel">Natural o con gas</div>
+        </div>
+        <div class="dopt" data-d="Bebida fría 🥤" onclick="selectDrink(this)">
+          <div class="d-icon">🥤</div>
+          <div class="d-label">Bebida fría</div>
+          <div class="d-sublabel">Jugo o refresco</div>
+        </div>
+        <div class="dopt" data-d="Sin bebida" onclick="selectDrink(this)">
+          <div class="d-icon">🚫</div>
+          <div class="d-label">Sin bebida</div>
+          <div class="d-sublabel">Gracias de todas formas</div>
+        </div>
+      </div>
+      <div class="oshi-info-card">
+        <div class="oshi-ic">🌿</div>
+        <div class="oshi-t">
+          <strong>Oshibori incluido en cada visita.</strong> Una toallita caliente de algodón con aceite de eucalipto — tu barbero te la entrega al sentarte en la silla. El ritual de bienvenida de Salon Men Saúl Fino.
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 5 — CONFIRMADO + SALA DE ESPERA -->
+    <div class="step-panel" id="step5">
+      <div class="confirm-wrap">
+        <div class="confirm-icon-big">✅</div>
+        <div class="confirm-title">¡Listo,<br/><em id="confirm_name_display">amigo</em>!</div>
+        <div class="confirm-sub">Estás en la cola. Tu barbero ya recibió el aviso. Puedes esperar aquí o abajo en el Bar Nacional — te avisamos cuando sea tu turno.</div>
+
+        <div class="confirm-card">
+          <div class="cc-head">
+            <div class="cc-head-label">Tu reserva confirmada ✦</div>
+            <div class="cc-client" id="cc_client">—</div>
+          </div>
+          <div class="cc-rows">
+            <div class="cc-row"><span class="cc-label">Barbero</span><span class="cc-val" id="cc_barber">—</span></div>
+            <div class="cc-row"><span class="cc-label">Servicios</span><span class="cc-val" id="cc_services">—</span></div>
+            <div class="cc-row"><span class="cc-label">Bebida</span><span class="cc-val" id="cc_drink">—</span></div>
+            <div class="cc-row"><span class="cc-label">Total estimado</span><span class="cc-val gold" id="cc_total">—</span></div>
+          </div>
+        </div>
+
+        <!-- Tiempo de espera -->
+        <div class="wait-time-card">
+          <div>
+            <div class="wt-num" id="wt_min">~12</div>
+            <div class="wt-label">min estimados</div>
+          </div>
+          <div class="wt-desc">Tu turno se actualiza en tiempo real. El barbero iniciará en cuanto esté disponible.</div>
+        </div>
+
+        <!-- Cola visual -->
+        <div class="queue-card">
+          <div class="qc-head">
+            <div class="qc-title">Sala de espera</div>
+            <div class="live-badge"><span class="pulse"></span> En vivo</div>
+          </div>
+          <div class="queue-rows" id="queueRows">
+            <!-- JS + tu entrada -->
+          </div>
+        </div>
+
+        <!-- Oshibori reminder -->
+        <div class="oshi-info-card">
+          <div class="oshi-ic">🌿</div>
+          <div class="oshi-t"><strong>Tu Oshibori ya está listo.</strong> Al sentarte en la silla, tu barbero te entregará la toallita caliente con eucalipto. Es parte del ritual de bienvenida.</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-grid">
+          <a class="action-btn ab-wa" id="wa_notify_btn" href="#" target="_blank">💬 Avisar por WA</a>
+          <a class="action-btn ab-back" href="saulfino_mobile.html">← Volver</a>
+        </div>
+
+      </div><!-- /confirm-wrap -->
+    </div>
+
+  </div><!-- /content-area -->
+
+  <!-- BOTTOM NAV (steps 1–4) -->
+  <div class="bottom-nav" id="bottomNav">
+    <button class="btn-back" id="btnBack" onclick="prevStep()" style="display:none">←</button>
+    <button class="btn-next" id="btnNext" onclick="nextStep()" disabled>
+      Continuar →
+    </button>
+  </div>
+
+</div><!-- /mainScreen -->
+
+
+<script>
+const WA = '56900000000';
+
+const BARBEROS = [
+  {id:'didian',  name:'Didian',  spec:'Fades & Diseños', ini:'D', available:true},
+  {id:'emerson', name:'Emerson', spec:'Cortes & Combos',  ini:'E', available:true},
+  {id:'samuel',  name:'Samuel',  spec:'Clásicos & Barba', ini:'S', available:true},
+  {id:'david',   name:'David',   spec:'Diseños Premium',  ini:'D', available:false},/* Demo: ocupado */
+  {id:'any',     name:'Cualquiera', spec:'Próximo disponible', ini:'★', available:true},
+];
+
+const SERVICES = [
+  // ── CLÁSICOS ──────────────────────────
+  {id:'corte',       name:'Corte Clásico',               price:12000, time:'30–40 min', icon:'✂'},
+  {id:'barba',       name:'Barba',                       price:10000, time:'25–35 min', icon:'🪒'},
+  {id:'perf_corte',  name:'Perfilado de Corte',          price:6000,  time:'15–20 min', icon:'✂'},
+  {id:'perf_barba',  name:'Perfilado de Barba',          price:6000,  time:'15–20 min', icon:'🪒'},
+  {id:'perf_cejas',  name:'Perfilado de Cejas',          price:4000,  time:'10–15 min', icon:'✨'},
+  // ── COMBOS ────────────────────────────
+  {id:'corte_barba', name:'Corte + Barba',               price:20000, time:'50–60 min', icon:'💈'},
+  {id:'corte_perfb', name:'Corte + Perfilado de Barba',  price:16000, time:'40–50 min', icon:'💈'},
+  {id:'corte_cejas', name:'Corte + Cejas',               price:15000, time:'40–50 min', icon:'💫'},
+  {id:'barba_cejas', name:'Barba + Cejas',               price:13000, time:'35–40 min', icon:'🪒'},
+  {id:'express',     name:'Corte Express + Perf. Barba', price:15000, time:'30–40 min', icon:'⚡'},
+  // ── TRATAMIENTOS ──────────────────────
+  {id:'mat_cabello', name:'Matizado Canas Cabello',      price:8000,  time:'20–30 min', icon:'🎨'},
+  {id:'mat_barba',   name:'Matizado Canas Barba',        price:5000,  time:'15–20 min', icon:'🎨'},
+];
+
+/* Demo queue (existing clients) */
+const DEMO_QUEUE = [
+  {name:'Carlos M.', meta:'Corte + Barba · Emerson', status:'current'},
+  {name:'Rodrigo F.', meta:'Corte Clásico · Samuel', status:'waiting'},
+];
+
+/* ─────── STATE ─────── */
+let currentStep = 1;
+let totalSteps = 4;
+let state = {name:'', barber:null, services:[], drink:null};
+
+/* ─────── RENDER BARBEROS ─────── */
+function renderBarbers(){
+  document.getElementById('barberList').innerHTML = BARBEROS.map(b=>`
+    <div class="bc-item${b.available?'':' unavailable'}" data-id="${b.id}" onclick="${b.available?"selectBarber('"+b.id+"')":""}">
+      <div class="bc-av">${b.ini}</div>
+      <div class="bc-info">
+        <div class="bc-name">${b.name}</div>
+        <div class="bc-spec">${b.spec} ${b.available?'':' <span class="bc-busy-badge">Ocupado</span>'}</div>
+      </div>
+      <div class="bc-check">✓</div>
+    </div>
+  `).join('');
+}
+
+function selectBarber(id){
+  state.barber = BARBEROS.find(b=>b.id===id);
+  document.querySelectorAll('.bc-item').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));
+  updateNextBtn();
+}
+
+/* ─────── RENDER SERVICES ─────── */
+function renderServices(){
+  document.getElementById('svcCheckList').innerHTML = SERVICES.map(s=>`
+    <div class="sci" data-id="${s.id}" onclick="toggleService('${s.id}',${s.price})">
+      <div class="sci-box">✓</div>
+      <div class="sci-icon">${s.icon}</div>
+      <div class="sci-info">
+        <div class="sci-name">${s.name}</div>
+        <div class="sci-time">⏱ ${s.time}</div>
+      </div>
+      <div class="sci-price">$${s.price.toLocaleString('es-CL')}</div>
+    </div>
+  `).join('');
+}
+
+function toggleService(id, price){
+  const el = document.querySelector(`.sci[data-id="${id}"]`);
+  const idx = state.services.findIndex(s=>s.id===id);
+  if(idx>=0){
+    state.services.splice(idx,1);
+    el.classList.remove('checked');
+  } else {
+    state.services.push({id, price});
+    el.classList.add('checked');
+  }
+  const total = state.services.reduce((a,s)=>a+s.price,0);
+  const row = document.getElementById('svcTotalRow');
+  row.style.display = state.services.length>0?'flex':'none';
+  document.getElementById('svcTotalNum').textContent = '$'+total.toLocaleString('es-CL');
+  updateNextBtn();
+}
+
+/* ─────── DRINK ─────── */
+function selectDrink(el){
+  document.querySelectorAll('.dopt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  state.drink = el.dataset.d;
+  updateNextBtn();
+}
+
+/* ─────── NAME ─────── */
+function setName(n){
+  document.getElementById('inp_name').value = n;
+  state.name = n;
+  updateNextBtn();
+}
+
+document.getElementById('inp_name').addEventListener('input', e=>{
+  state.name = e.target.value.trim();
+  updateNextBtn();
+});
+
+/* ─────── STEP NAV ─────── */
+function updateNextBtn(){
+  const btn = document.getElementById('btnNext');
+  let ok = false;
+  if(currentStep===1) ok = state.name.length>=2;
+  if(currentStep===2) ok = !!state.barber;
+  if(currentStep===3) ok = state.services.length>0;
+  if(currentStep===4) ok = !!state.drink;
+  btn.disabled = !ok;
+}
+
+function nextStep(){
+  if(currentStep===4){
+    submitCheckin();
+    return;
+  }
+  currentStep++;
+  showStep(currentStep);
+}
+
+function prevStep(){
+  if(currentStep<=1) return;
+  currentStep--;
+  showStep(currentStep);
+}
+
+function showStep(n){
+  document.querySelectorAll('.step-panel').forEach((p,i)=>p.classList.toggle('active',i===n-1));
+  document.querySelectorAll('.sl-item').forEach((l,i)=>{
+    l.classList.remove('active','done');
+    if(i===n-1) l.classList.add('active');
+    else if(i<n-1) l.classList.add('done');
+  });
+  const pct = n===5?100:(n/totalSteps*100);
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('btnBack').style.display = n>1&&n<5?'flex':'none';
+  const nextBtn = document.getElementById('btnNext');
+  if(n===4){nextBtn.textContent='✦ Confirmar llegada →';}
+  else if(n<4){nextBtn.textContent='Continuar →';}
+  document.getElementById('bottomNav').style.display = n===5?'none':'flex';
+  updateNextBtn();
+  window.scrollTo(0,0);
+}
+
+function submitCheckin(){
+  // Build confirm screen
+  const barberName = state.barber ? (state.barber.id==='any'?'Próximo disponible':state.barber.name) : '—';
+  const svcNames = state.services.map(s=>SERVICES.find(sv=>sv.id===s.id)?.name||s.id).join(', ');
+  const total = state.services.reduce((a,s)=>a+s.price,0);
+  const pos = DEMO_QUEUE.length + 1;
+  const waitMin = Math.max(5, pos * 15 - 5);
+
+  document.getElementById('confirm_name_display').textContent = state.name.split(' ')[0];
+  document.getElementById('cc_client').textContent = state.name;
+  document.getElementById('cc_barber').textContent = barberName;
+  document.getElementById('cc_services').textContent = svcNames;
+  document.getElementById('cc_drink').textContent = state.drink||'—';
+  document.getElementById('cc_total').textContent = '$'+total.toLocaleString('es-CL');
+  document.getElementById('wt_min').textContent = '~'+waitMin;
+
+  // Queue
+  const rows = document.getElementById('queueRows');
+  rows.innerHTML = DEMO_QUEUE.map((q,i)=>`
+    <div class="qr ${q.status}">
+      <div class="q-pos">${i+1}</div>
+      <div class="q-info"><div class="q-name">${q.name}</div><div class="q-meta">${q.meta}</div></div>
+      <div class="q-status ${q.status==='current'?'qs-c':'qs-w'}">${q.status==='current'?'✂ En silla':'Esperando'}</div>
+    </div>
+  `).join('') + `
+    <div class="qr mine">
+      <div class="q-pos">${pos}</div>
+      <div class="q-info"><div class="q-name">Tú · ${state.name}</div><div class="q-meta">${svcNames} · ${barberName}</div></div>
+      <div class="q-status qs-m">✓ Confirmado</div>
+    </div>
+  `;
+
+  // WA notify link
+  const waMsg = `✅ Ya llegué a Salon Men Saúl Fino.\n\nNombre: ${state.name}\nBarbero: ${barberName}\nServicios: ${svcNames}\nBebida: ${state.drink}\nTotal: $${total.toLocaleString('es-CL')}\n\n_Check-in via sucursal virtual._`;
+  document.getElementById('wa_notify_btn').href = `https://wa.me/${WA}?text=${encodeURIComponent(waMsg)}`;
+
+  currentStep = 5;
+  showStep(5);
+}
+
+/* ─────── INIT ─────── */
+renderBarbers();
+renderServices();
+showStep(1);
+</script>
+</body>
+</html>
