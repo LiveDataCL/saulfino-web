@@ -370,6 +370,15 @@ img{display:block;max-width:100%}
   border:none;cursor:pointer;font-family:'Montserrat',sans-serif;
   display:flex;align-items:center;justify-content:center;gap:10px;
 }
+
+/* ── BARBERS AUTO-SCROLL ── */
+.barbers-wrap{position:relative;margin:0 -20px;}
+.barbers-wrap .barbers-scroll{margin:0;padding-left:20px;padding-right:20px;}
+.barbers-fade-r{
+  position:absolute;top:0;right:0;bottom:8px;width:72px;
+  background:linear-gradient(to right,transparent,#0a0a08 88%);
+  pointer-events:none;z-index:2;transition:opacity .4s;
+}
 </style>
 </head>
 <body>
@@ -445,7 +454,10 @@ img{display:block;max-width:100%}
   <div class="sec-ey">Agenda tu ritual</div>
   <div class="sec-t">NUESTROS <span>MAESTROS</span></div>
   <div class="sec-sep"></div>
-  <div class="barbers-scroll" id="barbScroll"></div>
+  <div class="barbers-wrap">
+    <div class="barbers-scroll" id="barbScroll"></div>
+    <div class="barbers-fade-r" id="barbersFadeR"></div>
+  </div>
   <div id="barberPicked" style="display:none;margin-top:16px;padding:13px 16px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:12px;font-size:12px;color:rgba(201,168,76,.8);letter-spacing:.06em;text-align:center">
     MAESTRO ELEGIDO: <strong id="barberPickedName" style="color:#c9a84c"></strong>
   </div>
@@ -606,6 +618,36 @@ document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
     <div class="bc-spec">${b.spec}</div>
     <button class="bc-btn">AGENDA CON ${b.n}</button>
   </div>`).join('');
+
+
+
+/* ── AUTO-SCROLL BARBERS (ping-pong, pauses on interaction) ── */
+(function(){
+  const el  = document.getElementById('barbScroll');
+  const fadeR = document.getElementById('barbersFadeR');
+  let pos = 0, dir = 1, paused = false;
+
+  el.addEventListener('mouseenter', () => paused = true);
+  el.addEventListener('mouseleave', () => paused = false);
+  el.addEventListener('touchstart', () => paused = true, {passive:true});
+  el.addEventListener('touchend',   () => setTimeout(() => paused = false, 2500));
+  el.addEventListener('scroll',     () => { pos = el.scrollLeft; });
+
+  function step() {
+    if (!paused) {
+      const max = el.scrollWidth - el.clientWidth;
+      if (max > 0) {
+        pos += 0.45 * dir;
+        if (pos >= max - 1) dir = -1;
+        if (pos <= 1)       dir =  1;
+        el.scrollLeft = pos;
+        if (fadeR) fadeR.style.opacity = pos > max - 90 ? '0' : '1';
+      }
+    }
+    requestAnimationFrame(step);
+  }
+  step();
+})();
 
 function pickBarber(id) {
   selBarber = BARBERS.find(b => b.id === id);
