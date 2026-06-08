@@ -371,13 +371,36 @@ img{display:block;max-width:100%}
   display:flex;align-items:center;justify-content:center;gap:10px;
 }
 
-/* ── BARBERS AUTO-SCROLL ── */
-.barbers-wrap{position:relative;margin:0 -20px;}
-.barbers-wrap .barbers-scroll{margin:0;padding-left:20px;padding-right:20px;}
-.barbers-fade-r{
-  position:absolute;top:0;right:0;bottom:8px;width:72px;
-  background:linear-gradient(to right,transparent,#0a0a08 88%);
-  pointer-events:none;z-index:2;transition:opacity .4s;
+
+/* ── BARBERS DOTS + SWIPE HINT ── */
+.barbers-dots{
+  display:flex;justify-content:center;align-items:center;
+  gap:7px;margin-top:16px;
+}
+.barbers-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(201,168,76,.22);
+  transition:all .35s cubic-bezier(.4,0,.2,1);flex-shrink:0;
+}
+.barbers-dot.active{
+  width:20px;border-radius:4px;
+  background:#c9a84c;
+}
+.swipe-hint{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:10px;
+  font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(201,168,76,.45);
+  transition:opacity .6s;
+}
+.swipe-hint.gone{opacity:0;pointer-events:none}
+.swipe-hint-arrow{
+  font-size:16px;
+  animation:swipe-bounce 1.4s ease-in-out infinite;
+}
+@keyframes swipe-bounce{
+  0%,100%{transform:translateX(0)}
+  50%{transform:translateX(6px)}
 }
 </style>
 </head>
@@ -452,12 +475,11 @@ img{display:block;max-width:100%}
 <!-- BARBEROS -->
 <div class="sec" style="padding-bottom:20px;border-bottom:1px solid rgba(201,168,76,.1)">
   <div class="sec-ey">Agenda tu ritual</div>
-  <div class="sec-t">NUESTROS <span>MAESTROS</span></div>
+  <div class="sec-t">NUESTROS <span>MAESTROS BARBEROS</span></div>
   <div class="sec-sep"></div>
-  <div class="barbers-wrap">
-    <div class="barbers-scroll" id="barbScroll"></div>
-    <div class="barbers-fade-r" id="barbersFadeR"></div>
-  </div>
+  <div class="barbers-scroll" id="barbScroll"></div>
+  <div class="barbers-dots" id="barberDots"></div>
+  <div class="swipe-hint" id="swipeHint"><span>Desliza</span><span class="swipe-hint-arrow">&#8594;</span></div>
   <div id="barberPicked" style="display:none;margin-top:16px;padding:13px 16px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:12px;font-size:12px;color:rgba(201,168,76,.8);letter-spacing:.06em;text-align:center">
     MAESTRO ELEGIDO: <strong id="barberPickedName" style="color:#c9a84c"></strong>
   </div>
@@ -621,32 +643,27 @@ document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
 
 
 
-/* ── AUTO-SCROLL BARBERS (ping-pong, pauses on interaction) ── */
+/* ── BARBERS DOTS ── */
 (function(){
-  const el  = document.getElementById('barbScroll');
-  const fadeR = document.getElementById('barbersFadeR');
-  let pos = 0, dir = 1, paused = false;
+  const scroller = document.getElementById('barbScroll');
+  const dotsEl   = document.getElementById('barberDots');
+  const hintEl   = document.getElementById('swipeHint');
+  const cardW    = 185 + 14;
 
-  el.addEventListener('mouseenter', () => paused = true);
-  el.addEventListener('mouseleave', () => paused = false);
-  el.addEventListener('touchstart', () => paused = true, {passive:true});
-  el.addEventListener('touchend',   () => setTimeout(() => paused = false, 2500));
-  el.addEventListener('scroll',     () => { pos = el.scrollLeft; });
+  dotsEl.innerHTML = BARBERS.map((_,i) =>
+    '<div class="barbers-dot' + (i===0?' active':'') + '" data-i="' + i + '"></div>'
+  ).join('');
+  const dots = dotsEl.querySelectorAll('.barbers-dot');
 
-  function step() {
-    if (!paused) {
-      const max = el.scrollWidth - el.clientWidth;
-      if (max > 0) {
-        pos += 0.45 * dir;
-        if (pos >= max - 1) dir = -1;
-        if (pos <= 1)       dir =  1;
-        el.scrollLeft = pos;
-        if (fadeR) fadeR.style.opacity = pos > max - 90 ? '0' : '1';
-      }
+  let hintGone = false;
+  scroller.addEventListener('scroll', () => {
+    if (!hintGone && scroller.scrollLeft > 10) {
+      hintGone = true;
+      hintEl.classList.add('gone');
     }
-    requestAnimationFrame(step);
-  }
-  step();
+    const idx = Math.min(Math.round(scroller.scrollLeft / cardW), dots.length - 1);
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  }, {passive:true});
 })();
 
 function pickBarber(id) {
