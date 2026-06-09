@@ -19,6 +19,46 @@ a{color:inherit;text-decoration:none}
 button{font-family:'Montserrat',sans-serif;cursor:pointer;border:none;background:none}
 img{display:block;max-width:100%}
 
+/* ── BARBER PICKER SHEET ── */
+.bpick-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800}
+.bpick-ov.on{display:block}
+.bpick-sheet{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:801;
+  background:#131311;border-radius:20px 20px 0 0;
+  border-top:1px solid rgba(201,168,76,.25);
+  padding:24px 20px 36px;
+}
+.bpick-sheet.on{display:block;animation:slideUp .28s cubic-bezier(.4,0,.2,1)}
+.bpick-hdr{
+  font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
+  color:#c9a84c;text-align:center;margin-bottom:4px;
+}
+.bpick-sub{font-size:11px;color:rgba(255,255,255,.35);text-align:center;margin-bottom:20px;letter-spacing:.06em}
+.bpick-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.bpick-btn{
+  padding:12px 16px;border-radius:13px;
+  background:#1c1c18;border:1px solid rgba(201,168,76,.12);
+  color:#fff;cursor:pointer;font-family:'Montserrat',sans-serif;
+  display:flex;align-items:center;gap:12px;
+  transition:border-color .15s,background .15s;
+}
+.bpick-btn:active{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.4)}
+.bpick-av{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;overflow:hidden;
+  background:radial-gradient(circle at 38% 32%,#e8ce7a,#c9a84c 52%,#8a6a20);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;color:#0A0A08;
+}
+.bpick-av img{width:100%;height:100%;object-fit:cover;display:block}
+.bpick-info{display:flex;flex-direction:column;gap:2px;text-align:left}
+.bpick-nm{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff}
+.bpick-sp{font-size:10px;font-weight:500;color:rgba(255,255,255,.38);letter-spacing:.04em}
+.bpick-cancel{
+  width:100%;padding:13px;border-radius:12px;
+  background:transparent;border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.35);font-size:11px;font-weight:600;cursor:pointer;
+  font-family:'Montserrat',sans-serif;letter-spacing:.08em;text-transform:uppercase;
+}
 /* ── WHATSAPP FAB ── */
 .wa-fab{
   position:fixed;bottom:20px;right:16px;z-index:500;
@@ -437,6 +477,15 @@ img{display:block;max-width:100%}
 </head>
 <body>
 
+<!-- BARBER PICKER -->
+<div class="bpick-ov" id="bpickOv" onclick="if(event.target===this)closeBPicker()"></div>
+<div class="bpick-sheet" id="bpickSheet">
+  <div class="bpick-hdr">ELIGE TU MAESTRO BARBERO</div>
+  <div class="bpick-sub" id="bpickSub"></div>
+  <div class="bpick-list" id="bpickList"></div>
+  <button class="bpick-cancel" onclick="closeBPicker()">CANCELAR</button>
+</div>
+
 <!-- CART FAB -->
 <div class="cart-fab" id="cartFab" onclick="openCart()">
   <div class="cart-fab-icon">💈</div>
@@ -694,14 +743,14 @@ const SVCS = [
     desc:'Perfilado de barba y cejas en una sola sesión.',    img:I[3],
     inc:['Perfilado y diseño de barba completo.','Diseño y definición de cejas.','Navaja de precisión.','Oshibori aromático.']},
   {id:'mat_cabello',  n:'MATIZADO CANAS CABELLO',     cat:'premium', price:8000,  time:'20–30 MIN', badge:'EFECTO NATURAL',
-    desc:'Cubre las canas de forma gradual, discreta y natural.',img:I[7],
+    desc:'Cubre las canas de forma gradual, discreta y natural.',img:I[7], barbers:['didian','emerson'],
     inc:['Aplicación de matizador tono natural.','Cubre canas de forma gradual y discreta.','Sin aspecto artificial.','Resultado inmediato · Dura 3–5 semanas.']},
   {id:'mat_barba',    n:'MATIZADO CANAS BARBA',       cat:'premium', price:5000,  time:'15–20 MIN', badge:'BARBA NATURAL',
-    desc:'Matizador específico para barba, efecto 100% natural.',img:I[8],
+    desc:'Matizador específico para barba, efecto 100% natural.',img:I[8], barbers:['didian','emerson'],
     inc:['Matizador específico para barba.','Cubre canas de forma natural.','Compatible con cualquier corte.','Dura 2–4 semanas.']},
 ,
   {id:'disenos', n:'DISEÑOS', cat:'premium', price:6000, priceStr:'Desde $6.000', time:'SEGÚN DISEÑO', badge:'TU ESTILO, TU FIRMA',
-    desc:'Del trazo simple al diseño más elaborado — cada línea es expresión única de tu estilo.', img:I[6],
+    desc:'Del trazo simple al diseño más elaborado — cada línea es expresión única de tu estilo.', img:I[6], barbers:['emerson'],
     inc:['Diseño personalizado según tu idea o referencia.','Líneas, patrones y figuras de cualquier complejidad.','Precio final según detalle y tiempo.','Servicio exclusivo con Emerson.']}];
 
 let cart = [], selBarber = null;
@@ -784,17 +833,52 @@ document.getElementById('mFilters').addEventListener('click', e => {
 });
 
 /* ── CART ── */
+let pendingSvcId = null;
+
 function addCart(id) {
   if (cart.find(i => i.id === id)) return;
   const s = SVCS.find(x => x.id === id); if (!s) return;
+  if (!selBarber) { showBPicker(id); return; }
+  _doAddCart(s);
+}
+function _doAddCart(s) {
+  if (cart.find(i => i.id === s.id)) return;
   cart.push({...s}); updateCart();
-  const b = document.getElementById('ab_' + id);
+  const b = document.getElementById('ab_' + s.id);
   if (b) { b.textContent = '✓ AGREGADO'; b.classList.add('done'); }
+}
+function showBPicker(id) {
+  pendingSvcId = id;
+  const s = SVCS.find(x => x.id === id);
+  const allowedIds = s.barbers || BARBERS.map(b => b.id);
+  const avail = BARBERS.filter(b => allowedIds.includes(b.id));
+  document.getElementById('bpickSub').textContent = 'Servicio: ' + s.n;
+  document.getElementById('bpickList').innerHTML = avail.map(b =>
+    '<button class="bpick-btn" onclick="pickFromBPicker(\'' + b.id + '\')">'
+    + '<div class="bpick-av">' + (b.photo ? '<img src="'+b.photo+'" alt="'+b.n+'">' : b.ini) + '</div>'
+    + '<div class="bpick-info"><span class="bpick-nm">' + b.n + '</span><span class="bpick-sp">' + b.spec + '</span></div>'
+    + '</button>'
+  ).join('');
+  document.getElementById('bpickSheet').classList.add('on');
+  document.getElementById('bpickOv').classList.add('on');
+}
+function pickFromBPicker(barberId) {
+  pickBarber(barberId);
+  closeBPicker();
+  if (pendingSvcId) {
+    const s = SVCS.find(x => x.id === pendingSvcId);
+    pendingSvcId = null;
+    _doAddCart(s);
+  }
+}
+function closeBPicker() {
+  document.getElementById('bpickSheet').classList.remove('on');
+  document.getElementById('bpickOv').classList.remove('on');
 }
 function rmCart(id) {
   cart = cart.filter(i => i.id !== id); updateCart();
   const b = document.getElementById('ab_' + id);
-  if (b) { b.textContent = 'AGREGAR'; b.classList.remove('done'); }
+  if (b) { b.textContent = 'AGENDAR'; b.classList.remove('done'); }
 }
 function updateCart() {
   const tot = cart.reduce((a, i) => a + i.price, 0);
