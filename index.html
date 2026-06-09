@@ -197,18 +197,12 @@ img{display:block;max-width:100%}
 .svc-price{font-size:34px;font-weight:900;color:#fff;line-height:1;letter-spacing:.01em}
 .svc-btns{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .svc-add{
-  padding:11px 18px;border-radius:22px;
-  background:transparent;border:1.5px solid rgba(201,168,76,.45);
-  color:#c9a84c;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
-  cursor:pointer;font-family:'Montserrat',sans-serif;white-space:nowrap;transition:all .15s;
-}
-.svc-add.done{background:rgba(201,168,76,.1);border-color:#c9a84c}
-.svc-agenda{
-  padding:13px 16px;border-radius:12px;
+  padding:13px 22px;border-radius:12px;
   background:linear-gradient(135deg,#c9a84c,#8a6a20);
   color:#0A0A08;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
-  border:none;cursor:pointer;font-family:'Montserrat',sans-serif;white-space:nowrap;display:block;
+  border:none;cursor:pointer;font-family:'Montserrat',sans-serif;white-space:nowrap;transition:all .15s;
 }
+.svc-add.done{opacity:.65;transform:scale(.97)}
 
 /* ── FOOTER ── */
 .footer{
@@ -708,8 +702,7 @@ function renderSvcs(f) {
         <div class="svc-footer">
           <div class="svc-price">${s.priceStr||fmt(s.price)}</div>
           <div class="svc-btns">
-            <button class="svc-add" id="ab_${s.id}" onclick="addCart('${s.id}')">AGREGAR</button>
-            <a class="svc-agenda" href="https://wa.me/${WA}?text=${encodeURIComponent('💈 *RESERVA VIP - SALON MEN SAÚL FINO* 💈\n\n👑 Hola, quiero agendar: *'+s.n+'*\n\n⚡ Vengo de la sucursal virtual, quedo atento.')}" target="_blank">AGENDAR</a>
+            <button class="svc-add" id="ab_${s.id}" onclick="addCart('${s.id}')">AGENDAR</button>
           </div>
         </div>
       </div>
