@@ -19,6 +19,50 @@ a{color:inherit;text-decoration:none}
 button{font-family:'Montserrat',sans-serif;cursor:pointer;border:none;background:none}
 img{display:block;max-width:100%}
 
+/* ── BOOKING SHEET ── */
+.bk-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:700}
+.bk-ov.on{display:block}
+.bk-sheet{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:701;
+  background:#131311;border-radius:20px 20px 0 0;
+  border-top:1px solid rgba(201,168,76,.25);
+  max-height:92dvh;overflow-y:auto;
+}
+.bk-sheet.on{display:block;animation:slideUp .28s cubic-bezier(.4,0,.2,1)}
+.bk-handle{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:12px auto 0}
+.bk-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px}
+.bk-title{font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#c9a84c}
+.bk-close{background:none;border:none;color:rgba(255,255,255,.45);font-size:20px;cursor:pointer;padding:0;line-height:1}
+.bk-svc-info{padding:0 20px 14px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:4px}
+.bk-svc-nm{font-size:17px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#fff;margin-bottom:5px}
+.bk-svc-meta{font-size:11px;color:rgba(255,255,255,.38);letter-spacing:.04em}
+.bk-svc-meta strong{color:#c9a84c;font-weight:700}
+.bk-form{padding:12px 20px 4px}
+.bk-field{margin-bottom:14px}
+.bk-lbl{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:6px}
+.bk-inp{
+  width:100%;padding:12px 14px;border-radius:10px;
+  background:#1c1c18;border:1px solid rgba(255,255,255,.1);
+  color:#fff;font-size:13px;font-family:'Montserrat',sans-serif;
+  box-sizing:border-box;-webkit-appearance:none;appearance:none;
+}
+.bk-inp:focus{outline:none;border-color:rgba(201,168,76,.5)}
+.bk-inp option{background:#1c1c18}
+.bk-foot{padding:6px 20px 32px;display:flex;flex-direction:column;gap:10px}
+.bk-confirm{
+  padding:15px 20px;border-radius:13px;
+  background:#25D366;border:none;color:#fff;
+  font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;font-family:'Montserrat',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 4px 18px rgba(37,211,102,.35);
+}
+.bk-cancel{
+  padding:13px;border-radius:12px;
+  background:transparent;border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.32);font-size:11px;font-weight:600;cursor:pointer;
+  font-family:'Montserrat',sans-serif;letter-spacing:.08em;text-transform:uppercase;
+}
 /* ── BARBER PICKER SHEET ── */
 .bpick-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800}
 .bpick-ov.on{display:block}
@@ -477,6 +521,57 @@ img{display:block;max-width:100%}
 </head>
 <body>
 
+<!-- BOOKING SHEET -->
+<div class="bk-ov" id="bk-ov" onclick="if(event.target===this)closeBooking()"></div>
+<div class="bk-sheet" id="bk-sheet">
+  <div class="bk-handle"></div>
+  <div class="bk-hdr">
+    <div class="bk-title">AGENDAR CITA</div>
+    <button class="bk-close" onclick="closeBooking()">&#x2715;</button>
+  </div>
+  <div class="bk-svc-info">
+    <div class="bk-svc-nm" id="bkSvcNm"></div>
+    <div class="bk-svc-meta">con <strong id="bkBarberNm"></strong> &middot; <span id="bkPriceNm"></span></div>
+  </div>
+  <input type="hidden" id="bkSvcId"/>
+  <div class="bk-form">
+    <div class="bk-field">
+      <label class="bk-lbl">Fecha *</label>
+      <input type="date" id="bkDate" class="bk-inp"/>
+    </div>
+    <div class="bk-field">
+      <label class="bk-lbl">Hora preferida</label>
+      <select id="bkTime" class="bk-inp">
+        <option value="">Sin preferencia</option>
+        <option>10:00</option><option>10:30</option><option>11:00</option><option>11:30</option>
+        <option>12:00</option><option>12:30</option><option>13:00</option><option>13:30</option>
+        <option>14:00</option><option>14:30</option><option>15:00</option><option>15:30</option>
+        <option>16:00</option><option>16:30</option><option>17:00</option><option>17:30</option>
+        <option>18:00</option><option>18:30</option><option>19:00</option><option>19:30</option>
+      </select>
+    </div>
+    <div class="bk-field">
+      <label class="bk-lbl">Tu nombre *</label>
+      <input type="text" id="bkName" class="bk-inp" placeholder="Como te llamas?" autocomplete="given-name"/>
+    </div>
+    <div class="bk-field">
+      <label class="bk-lbl">Telefono *</label>
+      <input type="tel" id="bkPhone" class="bk-inp" placeholder="+56 9 XXXX XXXX" autocomplete="tel"/>
+    </div>
+    <div class="bk-field">
+      <label class="bk-lbl">Correo electronico</label>
+      <input type="email" id="bkEmail" class="bk-inp" placeholder="opcional" autocomplete="email"/>
+    </div>
+  </div>
+  <div class="bk-foot">
+    <button class="bk-confirm" onclick="confirmBooking()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      CONFIRMAR POR WHATSAPP
+    </button>
+    <button class="bk-cancel" onclick="closeBooking()">CANCELAR</button>
+  </div>
+</div>
+
 <!-- BARBER PICKER -->
 <div class="bpick-ov" id="bpickOv" onclick="if(event.target===this)closeBPicker()"></div>
 <div class="bpick-sheet" id="bpickSheet">
@@ -484,12 +579,6 @@ img{display:block;max-width:100%}
   <div class="bpick-sub" id="bpickSub"></div>
   <div class="bpick-list" id="bpickList"></div>
   <button class="bpick-cancel" onclick="closeBPicker()">CANCELAR</button>
-</div>
-
-<!-- CART FAB -->
-<div class="cart-fab" id="cartFab" onclick="openCart()">
-  <div class="cart-fab-icon">💈</div>
-  <div class="cart-fab-n" id="cartN">0</div>
 </div>
 
 <!-- WHATSAPP FAB -->
@@ -633,58 +722,6 @@ img{display:block;max-width:100%}
 <a class="wa-sticky" href="https://wa.me/56900000000?text=💈 Hola, quiero reservar un turno en Salon Men Saúl Fino." target="_blank">💬</a>
 
 <!-- CART SHEET -->
-<div class="overlay" id="ov" onclick="closeCart()"></div>
-<div class="sheet" id="sheet">
-  <div class="sh-handle"></div>
-  <div class="sh-head">
-    <div class="sh-title">× Tu Selección</div>
-    <button class="sh-x" onclick="closeCart()">✕</button>
-  </div>
-  <div class="sh-barber">
-    <div class="sh-av" id="shAv">?</div>
-    <div>
-      <div class="sh-nm" id="shNm">Sin maestro seleccionado</div>
-      <div class="sh-lb">Próximo disponible al llegar</div>
-    </div>
-  </div>
-  <div class="sh-items" id="shItems">
-    <div class="empty-cart"><span style="font-size:44px;opacity:.18">💈</span><span>Agrega servicios del menú</span></div>
-  </div>
-  <div class="sh-foot">
-    <div class="tot-row">
-      <span class="tot-lbl">Total Estimado</span>
-      <span class="tot-num" id="shTotal">$0</span>
-    </div>
-    <div class="tot-sub">Membresía Black Reserve: 10% de descuento en todos los servicios.</div>
-    <button class="agendar-main-btn" onclick="openModal()">📲 AGENDAR TURNO</button>
-  </div>
-</div>
-
-<!-- MODAL RESERVA -->
-<div class="modal" id="modal">
-  <div class="modal-bar">
-    <button class="modal-back" onclick="closeModal()">←</button>
-    <div class="modal-title">Datos de Reserva</div>
-    <div style="width:40px"></div>
-  </div>
-  <div class="modal-body">
-    <p class="modal-sub">Completa para asegurar tu espacio VIP</p>
-    <div class="fg"><label>Tu nombre</label><input class="fi" id="m_name" type="text" placeholder="¿Cómo te llamas?" autocomplete="given-name"/></div>
-    <div class="fg"><label>Fecha preferida</label><input class="fi" id="m_date" type="date"/></div>
-    <div class="fg"><label>Horario preferido</label>
-      <div class="fs-w"><select class="fs" id="m_time">
-        <option>10:00 – 11:00</option><option>11:00 – 12:00</option><option>12:00 – 13:00</option>
-        <option>14:00 – 15:00</option><option>15:00 – 16:00</option><option>16:00 – 17:00</option>
-        <option>17:00 – 18:00</option><option>18:00 – 19:00</option>
-      </select></div>
-    </div>
-    <div class="summary" id="mSum"></div>
-  </div>
-  <div class="modal-foot">
-    <button class="wa-confirm" onclick="sendWA()">📲 CONFIRMAR POR WHATSAPP</button>
-  </div>
-</div>
-
 <script>
 const WA = '56900000000'; // ← reemplaza con número real
 
@@ -818,7 +855,7 @@ function renderSvcs(f) {
         <div class="svc-footer">
           <div class="svc-price">${s.priceStr||fmt(s.price)}</div>
           <div class="svc-btns">
-            <button class="svc-add" id="ab_${s.id}" onclick="addCart('${s.id}')">AGENDAR</button>
+            <button class="svc-add" id="ab_${s.id}" onclick="agendar('${s.id}')">AGENDAR</button>
           </div>
         </div>
       </div>
@@ -832,21 +869,8 @@ document.getElementById('mFilters').addEventListener('click', e => {
   b.classList.add('on'); renderSvcs(b.dataset.f);
 });
 
-/* ── CART ── */
+/* ── BARBER PICKER ── */
 let pendingSvcId = null;
-
-function addCart(id) {
-  if (cart.find(i => i.id === id)) return;
-  const s = SVCS.find(x => x.id === id); if (!s) return;
-  if (!selBarber) { showBPicker(id); return; }
-  _doAddCart(s);
-}
-function _doAddCart(s) {
-  if (cart.find(i => i.id === s.id)) return;
-  cart.push({...s}); updateCart();
-  const b = document.getElementById('ab_' + s.id);
-  if (b) { b.textContent = '✓ AGREGADO'; b.classList.add('done'); }
-}
 function showBPicker(id) {
   pendingSvcId = id;
   const s = SVCS.find(x => x.id === id);
@@ -868,60 +892,61 @@ function pickFromBPicker(barberId) {
   if (pendingSvcId) {
     const s = SVCS.find(x => x.id === pendingSvcId);
     pendingSvcId = null;
-    _doAddCart(s);
+    openBooking(s);
   }
 }
 function closeBPicker() {
   document.getElementById('bpickSheet').classList.remove('on');
   document.getElementById('bpickOv').classList.remove('on');
 }
-function rmCart(id) {
-  cart = cart.filter(i => i.id !== id); updateCart();
-  const b = document.getElementById('ab_' + id);
-  if (b) { b.textContent = 'AGENDAR'; b.classList.remove('done'); }
-}
-function updateCart() {
-  const tot = cart.reduce((a, i) => a + i.price, 0);
-  const n = document.getElementById('cartN');
-  n.textContent = cart.length; n.style.display = cart.length ? 'flex' : 'none';
-  const fab = document.getElementById('cartFab');
-  if(fab) fab.style.display = cart.length ? 'flex' : 'none';
-  document.getElementById('shTotal').textContent = fmt(tot);
-  document.getElementById('shItems').innerHTML = cart.length === 0
-    ? '<div class="empty-cart"><span style="font-size:44px;opacity:.18">💈</span><span>Agrega servicios del menú</span></div>'
-    : cart.map(i => `<div class="cart-row"><div class="cr-nm">${i.n}</div><div class="cr-pr">${fmt(i.price)}</div><button class="cr-rm" onclick="rmCart('${i.id}')">✕</button></div>`).join('');
-}
-function openCart()  { document.getElementById('sheet').classList.add('on'); document.getElementById('ov').classList.add('on'); }
-function closeCart() { document.getElementById('sheet').classList.remove('on'); document.getElementById('ov').classList.remove('on'); }
 
-/* ── MODAL ── */
-function openModal() {
-  if (!cart.length) { alert('Agrega al menos un servicio primero.'); return; }
-  closeCart();
-  document.getElementById('m_date').value = new Date().toISOString().split('T')[0];
-  buildSum(); document.getElementById('modal').classList.add('on');
+/* ── BOOKING ── */
+function agendar(id) {
+  const s = SVCS.find(x => x.id === id); if (!s) return;
+  if (!selBarber) { showBPicker(id); return; }
+  openBooking(s);
 }
-function closeModal() { document.getElementById('modal').classList.remove('on'); }
-function buildSum() {
-  const tot = cart.reduce((a, i) => a + i.price, 0);
-  const bn = selBarber ? (selBarber.id === 'any' ? 'Próximo disponible' : selBarber.n) : 'Próximo disponible';
-  document.getElementById('mSum').innerHTML = `
-    <div class="sum-row"><span class="sum-lbl">Maestro</span><span class="sum-val">${bn}</span></div>
-    ${cart.map(i => `<div class="sum-row"><span class="sum-lbl">${i.n}</span><span class="sum-val">${fmt(i.price)}</span></div>`).join('')}
-    <div class="sum-sep"></div>
-    <div class="sum-tot"><span class="sum-tl">TOTAL</span><span class="sum-tn">${fmt(tot)}</span></div>`;
+function openBooking(s) {
+  document.getElementById('bkSvcNm').textContent = s.n;
+  const bn = selBarber ? (selBarber.id === 'any' ? 'Proximo disponible' : selBarber.n) : 'Proximo disponible';
+  document.getElementById('bkBarberNm').textContent = bn;
+  document.getElementById('bkPriceNm').textContent = s.priceStr || fmt(s.price);
+  document.getElementById('bkSvcId').value = s.id;
+  document.getElementById('bkDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('bkName').value = '';
+  document.getElementById('bkPhone').value = '';
+  document.getElementById('bkEmail').value = '';
+  document.getElementById('bk-sheet').classList.add('on');
+  document.getElementById('bk-ov').classList.add('on');
 }
-function sendWA() {
-  const nm = document.getElementById('m_name').value.trim() || 'Cliente';
-  const dt = document.getElementById('m_date').value;
-  const hr = document.getElementById('m_time').value;
-  const bn = selBarber ? (selBarber.id === 'any' ? 'Próximo disponible' : selBarber.n) : 'Próximo disponible';
-  const tot = cart.reduce((a, i) => a + i.price, 0);
-  const sv = cart.map(i => i.n).join(', ');
-  const msg = `💈 *RESERVA VIP - SALON MEN SAÚL FINO* 💈\n\n👑 Hola, soy *${nm}* y quiero agendar mi próximo ritual:\n\n✂️ Servicios: ${sv}\n👤 Maestro: ${bn}\n📅 Fecha: ${dt}\n🕐 Horario: ${hr}\n💰 Total estimado: ${fmt(tot)}\n\n⚡ _Vengo de la sucursal virtual, quedo atento a confirmación._`;
-  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
-  closeModal();
+function closeBooking() {
+  document.getElementById('bk-sheet').classList.remove('on');
+  document.getElementById('bk-ov').classList.remove('on');
 }
+function confirmBooking() {
+  const name  = document.getElementById('bkName').value.trim();
+  const phone = document.getElementById('bkPhone').value.trim();
+  const email = document.getElementById('bkEmail').value.trim();
+  const date  = document.getElementById('bkDate').value;
+  const time  = document.getElementById('bkTime').value;
+  const svcId = document.getElementById('bkSvcId').value;
+  if (!name)  { document.getElementById('bkName').focus(); return; }
+  if (!phone) { document.getElementById('bkPhone').focus(); return; }
+  const s  = SVCS.find(x => x.id === svcId);
+  const bn = selBarber ? (selBarber.id === 'any' ? 'Proximo disponible' : selBarber.n) : 'Proximo disponible';
+  const msg = '💈 *RESERVA - SALON MEN SAUL FINO*\n\n'
+    + '✂️ Servicio: ' + s.n + '\n'
+    + '👤 Maestro: ' + bn + '\n'
+    + '📅 Fecha: ' + date + '\n'
+    + (time ? '🕐 Hora: ' + time + '\n' : '')
+    + '\n'
+    + '🙋 Nombre: ' + name + '\n'
+    + '📱 Telefono: ' + phone + '\n'
+    + (email ? '📧 Correo: ' + email : '');
+  window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(msg), '_blank');
+  closeBooking();
+}
+
 </script>
 </body>
 </html>
