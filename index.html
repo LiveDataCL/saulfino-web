@@ -889,9 +889,9 @@ function pickFromBPicker(barberId) {
   pickBarber(barberId);
   closeBPicker();
   if (pendingSvcId) {
-    const s = SVCS.find(x => x.id === pendingSvcId);
+    const id = pendingSvcId;
     pendingSvcId = null;
-    openBooking(s);
+    agendar(id);
   }
 }
 function closeBPicker() {
