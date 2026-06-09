@@ -210,6 +210,7 @@ img{display:block;max-width:100%}
   background:#080806;border-top:1px solid rgba(201,168,76,.1);
   text-align:center;
 }
+.footer-logo{width:70px;height:70px;margin:0 auto 14px;display:block;filter:drop-shadow(0 0 10px rgba(201,168,76,.3));}
 .footer-name{font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#c9a84c;margin-bottom:4px}
 .footer-sub{font-size:11px;color:rgba(255,255,255,.3);line-height:1.6;margin-bottom:24px}
 .footer-links{display:flex;flex-direction:column;gap:10px;text-align:left;margin-bottom:28px}
@@ -489,6 +490,8 @@ img{display:block;max-width:100%}
 
 <!-- FOOTER -->
 <div class="footer">
+  <img class="footer-logo" id="footer-logo-sf" alt="Salon Men Saúl Fino"/>
+  <script>document.getElementById('footer-logo-sf').src=document.querySelector('.brand-logo').src;</script>
   <div class="footer-name">Salon Men Saúl Fino</div>
   <div class="footer-sub">
     Galería Santiago Centro · Local 222<br/>
