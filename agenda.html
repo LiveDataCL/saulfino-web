@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Agenda tu Cita · Salon Men Saúl Fino</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Montserrat',sans-serif;background:#0A0A08;color:#fff;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:'Montserrat',sans-serif;cursor:pointer;border:none;background:none}
+input{font-family:'Montserrat',sans-serif}
+
+/* ── Layout ── */
+.page{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid rgba(201,168,76,.1)}
+.back-btn{width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:#c9a84c;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.back-btn:active{background:rgba(201,168,76,.2)}
+.topbar-info{flex:1}
+.topbar-title{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:2px}
+.topbar-sub{font-size:13px;font-weight:700;color:#fff}
+.sf-logo{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#c9a84c,#8a6a20);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:13px;color:#0A0A08;flex-shrink:0}
+
+/* ── Steps ── */
+.steps-wrap{padding:14px 20px 0;display:flex;gap:6px;align-items:center}
+.step-dot{height:4px;border-radius:2px;background:rgba(201,168,76,.18);transition:background .25s,width .25s;flex:1}
+.step-dot.done{background:rgba(201,168,76,.5)}
+.step-dot.active{background:#c9a84c}
+
+/* ── Screen container ── */
+.screens{flex:1;overflow:hidden;position:relative}
+.screen{display:none;padding:24px 20px 32px;flex-direction:column;gap:20px;animation:fadeIn .2s ease}
+.screen.on{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+/* ── Section title ── */
+.stitle{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(201,168,76,.65);margin-bottom:4px}
+.stitle-big{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:#fff;line-height:1.2}
+
+/* ── Barber cards ── */
+.barbers-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.b-card{background:#131311;border:1.5px solid rgba(201,168,76,.18);border-radius:14px;padding:16px 12px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.b-card.sel{border-color:#c9a84c;background:rgba(201,168,76,.06)}
+.b-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#252518,#151510);border:2px solid rgba(201,168,76,.3);margin:0 auto 10px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:24px;color:rgba(201,168,76,.3)}
+.b-av img{width:100%;height:100%;object-fit:cover;object-position:center top}
+.b-card.sel .b-av{border-color:#c9a84c}
+.b-nm{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;margin-bottom:3px}
+.b-sp{font-size:10px;color:rgba(201,168,76,.65);letter-spacing:.05em}
+.b-any{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:14px 16px;background:#131311;border:1.5px solid rgba(201,168,76,.18);border-radius:14px;cursor:pointer;transition:border-color .15s}
+.b-any.sel{border-color:#c9a84c;background:rgba(201,168,76,.06)}
+.b-any-icon{width:44px;height:44px;border-radius:50%;background:rgba(201,168,76,.1);border:1.5px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-size:20px;color:#c9a84c;flex-shrink:0}
+.b-any-text{text-align:left}
+.b-any-nm{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;margin-bottom:2px}
+.b-any-sp{font-size:10px;color:rgba(201,168,76,.6)}
+
+/* ── Service pills ── */
+.svc-grid{display:flex;flex-direction:column;gap:10px}
+.svc-pill{padding:14px 16px;background:#131311;border:1.5px solid rgba(201,168,76,.18);border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:border-color .15s}
+.svc-pill.sel{border-color:#c9a84c;background:rgba(201,168,76,.06)}
+.svc-pill-left{text-align:left}
+.svc-pill-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
+.svc-pill-dur{font-size:10px;color:rgba(201,168,76,.65);letter-spacing:.05em;text-transform:uppercase}
+.svc-pill-price{font-size:14px;font-weight:800;color:#c9a84c}
+
+/* ── Calendar ── */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-nav-btn{width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:#c9a84c;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+.cal-nav-btn:active{background:rgba(201,168,76,.2)}
+.cal-month{font-size:14px;font-weight:700;color:#fff;text-transform:capitalize}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-wd{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);text-align:center;padding-bottom:8px}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:pointer;position:relative;transition:background .15s,color .15s}
+.cal-day.empty{cursor:default}
+.cal-day.past,.cal-day.closed{color:rgba(255,255,255,.2);cursor:not-allowed}
+.cal-day.avail{background:rgba(201,168,76,.08);color:rgba(255,255,255,.85)}
+.cal-day.avail:active{background:rgba(201,168,76,.2)}
+.cal-day.today{border:1px solid rgba(201,168,76,.35)}
+.cal-day.sel{background:#c9a84c !important;color:#0A0A08 !important;font-weight:900}
+.cal-legend{display:flex;gap:16px;justify-content:center;margin-top:12px}
+.cal-leg-item{display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(255,255,255,.45)}
+.cal-leg-dot{width:8px;height:8px;border-radius:50%}
+
+/* ── Slots ── */
+.sel-date-label{font-size:13px;color:rgba(201,168,76,.8);font-weight:600;text-transform:capitalize;margin-bottom:-4px}
+.slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot-btn{padding:11px 4px;border-radius:10px;font-size:12px;font-weight:700;letter-spacing:.04em;text-align:center;transition:background .12s,transform .1s;cursor:pointer;border:1.5px solid transparent}
+.slot-btn.avail{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:#c9a84c}
+.slot-btn.avail:active{background:rgba(201,168,76,.2);transform:scale(.97)}
+.slot-btn.taken{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.07);color:rgba(255,255,255,.2);cursor:not-allowed}
+.slot-btn.sel-s{background:#c9a84c !important;border-color:#c9a84c !important;color:#0A0A08 !important}
+.slots-loading{text-align:center;padding:32px 0;color:rgba(255,255,255,.35);font-size:13px}
+.slots-empty{text-align:center;padding:32px 0;color:rgba(255,255,255,.4);font-size:13px;line-height:1.6}
+
+/* ── Form ── */
+.form-summary{background:#131311;border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px 16px;margin-bottom:4px}
+.form-sum-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.form-sum-row:last-child{margin-bottom:0}
+.form-sum-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)}
+.form-sum-val{font-size:12px;font-weight:700;color:#c9a84c}
+.form-fields{display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(201,168,76,.65);font-weight:700}
+.field input{background:#131311;border:1.5px solid rgba(201,168,76,.2);border-radius:10px;padding:13px 14px;font-size:14px;color:#fff;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.field input:focus{border-color:#c9a84c}
+.field input::placeholder{color:rgba(255,255,255,.25)}
+.field-hint{font-size:10px;color:rgba(255,255,255,.3);padding-left:2px}
+
+/* ── Confirmation ── */
+.confirm-box{text-align:center;padding:16px 0 24px}
+.confirm-check{width:72px;height:72px;border-radius:50%;background:rgba(32,160,80,.15);border:2px solid #20a050;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:popIn .4s ease}
+@keyframes popIn{0%{transform:scale(0)}80%{transform:scale(1.1)}100%{transform:scale(1)}}
+.confirm-check svg{width:36px;height:36px;stroke:#20a050}
+.confirm-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;margin-bottom:8px}
+.confirm-sub{font-size:13px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:24px}
+.confirm-card{background:#131311;border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:18px 16px;text-align:left;margin-bottom:20px}
+.confirm-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.confirm-row:last-child{border-bottom:none}
+.confirm-row-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4)}
+.confirm-row-val{font-size:13px;font-weight:700;color:#c9a84c}
+.confirm-wa{background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.25);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5;margin-bottom:16px}
+.confirm-wa svg{flex-shrink:0}
+.home-btn{display:block;text-align:center;padding:14px;background:rgba(201,168,76,.1);border:1.5px solid rgba(201,168,76,.3);border-radius:12px;color:#c9a84c;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:background .15s}
+.home-btn:active{background:rgba(201,168,76,.2)}
+
+/* ── CTA Button ── */
+.cta{width:100%;padding:15px;border-radius:12px;background:linear-gradient(135deg,#c9a84c,#8a6a20);color:#0A0A08;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;margin-top:auto;transition:opacity .15s,transform .1s;flex-shrink:0}
+.cta:active{transform:scale(.98)}
+.cta:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ── Divider ── */
+.divider{height:1px;background:rgba(201,168,76,.1)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="sf-logo">SF</div>
+    <div class="topbar-info">
+      <div class="topbar-title">Salon Men Saúl Fino</div>
+      <div class="topbar-sub" id="topbarSub">Agenda tu cita</div>
+    </div>
+    <button class="back-btn" id="backBtn" onclick="goBack()" style="display:none">&#8592;</button>
+  </div>
+
+  <!-- Step dots -->
+  <div class="steps-wrap" id="stepDots"></div>
+
+  <!-- Screens -->
+  <div class="screens">
+
+    <!-- S1: Barber -->
+    <div class="screen on" id="s1">
+      <div>
+        <div class="stitle">Paso 1 de 5</div>
+        <div class="stitle-big">¿Con quién quieres tu cita?</div>
+      </div>
+      <div class="barbers-grid" id="barbersGrid"></div>
+      <div class="b-any" id="bAny" onclick="selBarber('any')">
+        <div class="b-any-icon">★</div>
+        <div class="b-any-text">
+          <div class="b-any-nm">Cualquiera</div>
+          <div class="b-any-sp">El próximo disponible</div>
+        </div>
+      </div>
+      <button class="cta" id="s1Next" onclick="goStep(2)" disabled>CONTINUAR</button>
+    </div>
+
+    <!-- S2: Service -->
+    <div class="screen" id="s2">
+      <div>
+        <div class="stitle">Paso 2 de 5</div>
+        <div class="stitle-big">¿Qué servicio quieres?</div>
+      </div>
+      <div class="svc-grid" id="svcGrid"></div>
+      <button class="cta" id="s2Next" onclick="goStep(3)" disabled>CONTINUAR</button>
+    </div>
+
+    <!-- S3: Calendar -->
+    <div class="screen" id="s3">
+      <div>
+        <div class="stitle">Paso 3 de 5</div>
+        <div class="stitle-big">¿Qué día te queda bien?</div>
+      </div>
+      <div>
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="prevMonth()">&#8592;</button>
+          <div class="cal-month" id="calMonth"></div>
+          <button class="cal-nav-btn" onclick="nextMonth()">&#8594;</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend">
+          <div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(201,168,76,.5)"></div>Disponible</div>
+          <div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(255,255,255,.15)"></div>Cerrado</div>
+        </div>
+      </div>
+      <button class="cta" id="s3Next" onclick="goStep(4)" disabled>VER HORARIOS DISPONIBLES</button>
+    </div>
+
+    <!-- S4: Slots -->
+    <div class="screen" id="s4">
+      <div>
+        <div class="stitle">Paso 4 de 5</div>
+        <div class="stitle-big">¿A qué hora?</div>
+        <div class="sel-date-label" id="selDateLabel"></div>
+      </div>
+      <div id="slotsContainer"><div class="slots-loading">Cargando horarios...</div></div>
+      <button class="cta" id="s4Next" onclick="goStep(5)" disabled>CONTINUAR</button>
+    </div>
+
+    <!-- S5: Form -->
+    <div class="screen" id="s5">
+      <div>
+        <div class="stitle">Paso 5 de 5</div>
+        <div class="stitle-big">Tus datos</div>
+      </div>
+      <div class="form-summary" id="formSummary"></div>
+      <div class="form-fields">
+        <div class="field">
+          <label>Tu nombre *</label>
+          <input type="text" id="fName" placeholder="¿Cómo te llamas?" autocomplete="given-name"/>
+        </div>
+        <div class="field">
+          <label>Teléfono *</label>
+          <input type="tel" id="fPhone" placeholder="+56 9 XXXX XXXX" autocomplete="tel"/>
+          <div class="field-hint">Para recordatorio por WhatsApp</div>
+        </div>
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="email" id="fEmail" placeholder="opcional" autocomplete="email"/>
+        </div>
+      </div>
+      <button class="cta" id="s5Confirm" onclick="confirmarCita()">CONFIRMAR CITA</button>
+    </div>
+
+    <!-- S6: Confirmation -->
+    <div class="screen" id="s6">
+      <div class="confirm-box">
+        <div class="confirm-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="confirm-title">¡Cita Confirmada!</div>
+        <div class="confirm-sub" id="confirmSub"></div>
+      </div>
+      <div class="confirm-card" id="confirmCard"></div>
+      <div class="confirm-wa">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Te enviaremos un recordatorio por WhatsApp el día anterior a tu cita.
+      </div>
+      <a href="index.html" class="home-btn">VOLVER AL SITIO</a>
+    </div>
+
+  </div><!-- /screens -->
+</div><!-- /page -->
+
+<script>
+const API = 'https://barberpilot-api-production.up.railway.app';
+
+// ── Data ──────────────────────────────────────────────────────
+const BARBERS_DATA = [
+  { id: 'samuel',  bid: 'b3', n: 'SAMUEL',     spec: 'Cortes · Barba', ini: 'S' },
+  { id: 'emerson', bid: 'b2', n: 'EMERSON',    spec: 'Diseños increíbles', ini: 'E' },
+  { id: 'didian',  bid: 'b1', n: 'DIDIAN',     spec: 'Fades · Tapers', ini: 'D' },
+  { id: 'david',   bid: 'b4', n: 'DAVID',      spec: 'Fades · Clásicos', ini: 'D' },
+];
+
+const SVCS_DATA = [
+  { id:'corte',       n:'Corte Clásico',              dur:30,  price:'$12.000' },
+  { id:'barba',       n:'Barba',                      dur:30,  price:'$10.000' },
+  { id:'perf_corte',  n:'Perfilado de Corte',         dur:20,  price:'$6.000'  },
+  { id:'perf_barba',  n:'Perfilado de Barba',         dur:20,  price:'$6.000'  },
+  { id:'perf_cejas',  n:'Perfilado de Cejas',         dur:20,  price:'$4.000'  },
+  { id:'corte_barba', n:'Corte + Barba',              dur:60,  price:'$20.000' },
+  { id:'corte_perfb', n:'Corte + Perfilado Barba',    dur:45,  price:'$16.000' },
+  { id:'corte_cejas', n:'Corte + Cejas',              dur:45,  price:'$16.000' },
+  { id:'barba_cejas', n:'Barba + Cejas',              dur:30,  price:'$13.000' },
+  { id:'mat_cabello', n:'Matizado Canas Cabello',     dur:45,  price:'$8.000'  },
+  { id:'mat_barba',   n:'Matizado Canas Barba',       dur:30,  price:'$5.000'  },
+  { id:'disenos',     n:'Diseños',                    dur:60,  price:'Desde $6.000' },
+];
+
+// Service restrictions (same as index.html)
+const SVC_BARBERS = {
+  mat_cabello: ['didian','emerson'],
+  mat_barba:   ['didian','emerson'],
+  disenos:     ['didian','emerson'],
+};
+
+// ── State ─────────────────────────────────────────────────────
+let step = 1;
+let pickedBarber = null;   // { id, bid, n, spec, ini }
+let pickedSvc    = null;   // { id, n, dur, price }
+let pickedDate   = null;   // 'YYYY-MM-DD'
+let pickedSlot   = null;   // { hora, hora_fin }
+let confirmedApt = null;
+
+let calYear, calMonth;
+const DIAS = ['D','L','M','M','J','V','S'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+// ── URL Params pre-fill ──────────────────────────────────────
+function readParams() {
+  const p = new URLSearchParams(location.search);
+  const bidParam  = p.get('bid');
+  const svcParam  = p.get('svc_id');
+  if (bidParam) {
+    const b = BARBERS_DATA.find(x => x.bid === bidParam);
+    if (b) { pickedBarber = b; }
+  }
+  if (svcParam) {
+    const s = SVCS_DATA.find(x => x.id === svcParam);
+    if (s) { pickedSvc = s; }
+  }
+  if (pickedBarber && pickedSvc) { step = 3; }
+  else if (pickedBarber) { step = 2; }
+}
+
+// ── Init ──────────────────────────────────────────────────────
+function init() {
+  readParams();
+  renderBarbers();
+  renderSvcs();
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
+  renderDots();
+  showStep(step);
+}
+
+// ── Steps ─────────────────────────────────────────────────────
+function renderDots() {
+  const wrap = document.getElementById('stepDots');
+  wrap.innerHTML = Array.from({length:5}, (_,i) =>
+    `<div class="step-dot${i+1 < step ? ' done' : ''}${i+1 === step ? ' active' : ''}" id="dot${i+1}"></div>`
+  ).join('');
+}
+
+function showStep(n) {
+  step = n;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById('s' + n).classList.add('on');
+  document.getElementById('backBtn').style.display = n > 1 ? 'flex' : 'none';
+  document.getElementById('topbarSub').textContent =
+    ['','¿Con quién?','¿Qué servicio?','¿Qué día?','¿A qué hora?','Tus datos','¡Confirmada!'][n];
+  renderDots();
+  if (n === 4) loadSlots();
+  if (n === 5) renderFormSummary();
+}
+
+function goBack() {
+  if (step > 1) showStep(step - 1);
+}
+
+function goStep(n) {
+  showStep(n);
+}
+
+// ── S1: Barbers ───────────────────────────────────────────────
+function renderBarbers() {
+  const grid = document.getElementById('barbersGrid');
+  grid.innerHTML = BARBERS_DATA.map(b => `
+    <div class="b-card${pickedBarber?.id === b.id ? ' sel' : ''}" id="bc_${b.id}" onclick="selBarber('${b.id}')">
+      <div class="b-av">${b.ini}</div>
+      <div class="b-nm">${b.n}</div>
+      <div class="b-sp">${b.spec}</div>
+    </div>
+  `).join('');
+  if (pickedBarber?.id === 'any') document.getElementById('bAny').classList.add('sel');
+  document.getElementById('s1Next').disabled = !pickedBarber;
+}
+
+function selBarber(id) {
+  if (id === 'any') {
+    pickedBarber = { id: 'any', bid: null, n: 'Cualquiera', spec: 'Próximo disponible', ini: '★' };
+    document.querySelectorAll('.b-card').forEach(c => c.classList.remove('sel'));
+    document.getElementById('bAny').classList.add('sel');
+  } else {
+    pickedBarber = BARBERS_DATA.find(b => b.id === id);
+    document.querySelectorAll('.b-card').forEach(c => c.classList.remove('sel'));
+    document.getElementById('bAny').classList.remove('sel');
+    document.getElementById('bc_' + id).classList.add('sel');
+  }
+  // Filter available services
+  if (pickedSvc) {
+    const allowed = SVC_BARBERS[pickedSvc.id];
+    if (allowed && pickedBarber.id !== 'any' && !allowed.includes(pickedBarber.id)) {
+      pickedSvc = null; // reset if barber can't do that service
+    }
+  }
+  document.getElementById('s1Next').disabled = false;
+  renderSvcs();
+}
+
+// ── S2: Services ──────────────────────────────────────────────
+function renderSvcs() {
+  const grid = document.getElementById('svcGrid');
+  const filteredBarber = pickedBarber && pickedBarber.id !== 'any' ? pickedBarber.id : null;
+  const visible = filteredBarber
+    ? SVCS_DATA.filter(s => { const a = SVC_BARBERS[s.id]; return !a || a.includes(filteredBarber); })
+    : SVCS_DATA;
+  grid.innerHTML = visible.map(s => `
+    <div class="svc-pill${pickedSvc?.id === s.id ? ' sel' : ''}" id="sp_${s.id}" onclick="selSvc('${s.id}')">
+      <div class="svc-pill-left">
+        <div class="svc-pill-name">${s.n}</div>
+        <div class="svc-pill-dur">${s.dur} min</div>
+      </div>
+      <div class="svc-pill-price">${s.price}</div>
+    </div>
+  `).join('');
+  document.getElementById('s2Next').disabled = !pickedSvc;
+}
+
+function selSvc(id) {
+  pickedSvc = SVCS_DATA.find(s => s.id === id);
+  document.querySelectorAll('.svc-pill').forEach(p => p.classList.remove('sel'));
+  const el = document.getElementById('sp_' + id);
+  if (el) el.classList.add('sel');
+  document.getElementById('s2Next').disabled = false;
+}
+
+// ── S3: Calendar ──────────────────────────────────────────────
+function renderCalendar() {
+  const grid   = document.getElementById('calGrid');
+  const header = document.getElementById('calMonth');
+  header.textContent = MESES[calMonth] + ' ' + calYear;
+
+  const today   = new Date(); today.setHours(0,0,0,0);
+  const firstDow = new Date(calYear, calMonth, 1).getDay(); // 0=sun
+  const daysInM  = new Date(calYear, calMonth + 1, 0).getDate();
+
+  // Day-of-week headers (Mon first)
+  grid.innerHTML = ['L','M','M','J','V','S','D'].map(d =>
+    `<div class="cal-wd">${d}</div>`
+  ).join('');
+
+  // Offset: Mon=0, so if firstDow=0(Sun), offset=6; if 1(Mon), offset=0; etc.
+  const offset = (firstDow + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.innerHTML += '<div class="cal-day empty"></div>';
+
+  for (let d = 1; d <= daysInM; d++) {
+    const date    = new Date(calYear, calMonth, d);
+    const dow     = date.getDay(); // 0=sun
+    const isPast  = date < today;
+    const isSun   = dow === 0;
+    const isSel   = pickedDate === fmtDate(calYear, calMonth, d);
+    const isToday = date.getTime() === today.getTime();
+
+    let cls = 'cal-day';
+    if (isPast)     cls += ' past';
+    else if (isSun) cls += ' closed';
+    else            cls += ' avail';
+    if (isSel)  cls += ' sel';
+    if (isToday && !isSel) cls += ' today';
+
+    const onclick = (!isPast && !isSun)
+      ? `onclick="pickDate('${fmtDate(calYear, calMonth, d)}')"` : '';
+    grid.innerHTML += `<div class="${cls}" ${onclick}>${d}</div>`;
+  }
+}
+
+function fmtDate(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function prevMonth() {
+  if (calMonth === 0) { calMonth = 11; calYear--; } else calMonth--;
+  renderCalendar();
+}
+function nextMonth() {
+  if (calMonth === 11) { calMonth = 0; calYear++; } else calMonth++;
+  renderCalendar();
+}
+
+function pickDate(dateStr) {
+  pickedDate = dateStr;
+  pickedSlot = null;
+  renderCalendar();
+  document.getElementById('s3Next').disabled = false;
+}
+
+// ── S4: Slots ─────────────────────────────────────────────────
+async function loadSlots() {
+  const cont = document.getElementById('slotsContainer');
+  cont.innerHTML = '<div class="slots-loading">Cargando horarios disponibles...</div>';
+  document.getElementById('s4Next').disabled = true;
+
+  const [d, mo, dy] = pickedDate.split('-').map(Number);
+  const dateObj = new Date(d, mo - 1, dy);
+  document.getElementById('selDateLabel').textContent =
+    DIAS[dateObj.getDay()] === 'D' ? '' :
+    `${['lunes','martes','miércoles','jueves','viernes','sábado'][((dateObj.getDay()+6)%7)]} ${dy} de ${MESES[mo-1]}`;
+
+  try {
+    if (pickedBarber.id === 'any') {
+      // Fetch all barbers and merge
+      const results = await Promise.all(
+        BARBERS_DATA.map(b =>
+          fetch(`${API}/appointments/slots?bid=${b.bid}&date=${pickedDate}&svc_id=${pickedSvc.id}`)
+            .then(r => r.json()).then(j => ({ bid: b.bid, b, slots: j.slots || [] }))
+        )
+      );
+      // Build merged map: time → which barbers are available
+      const map = {};
+      for (const { b, slots } of results) {
+        for (const s of slots) {
+          if (!map[s.hora]) map[s.hora] = { hora: s.hora, hora_fin: s.hora_fin, available_bids: [] };
+          if (s.disponible) map[s.hora].available_bids.push({ bid: b.bid, n: b.n, id: b.id });
+        }
+      }
+      const merged = Object.values(map).sort((a,b) => a.hora.localeCompare(b.hora));
+      renderSlots(merged.map(s => ({ hora: s.hora, hora_fin: s.hora_fin, disponible: s.available_bids.length > 0, available_bids: s.available_bids })));
+    } else {
+      const r = await fetch(`${API}/appointments/slots?bid=${pickedBarber.bid}&date=${pickedDate}&svc_id=${pickedSvc.id}`);
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error);
+      renderSlots(j.slots || []);
+    }
+  } catch (e) {
+    cont.innerHTML = `<div class="slots-empty">No se pudo cargar la disponibilidad.<br>Intenta de nuevo.</div>`;
+  }
+}
+
+function renderSlots(slots) {
+  const cont = document.getElementById('slotsContainer');
+  if (!slots.length) {
+    cont.innerHTML = '<div class="slots-empty">No hay horarios disponibles para este día.<br>Prueba con otra fecha.</div>';
+    return;
+  }
+  const html = `<div class="slots-grid">${slots.map(s => `
+    <button class="slot-btn ${s.disponible ? 'avail' : 'taken'}${pickedSlot?.hora === s.hora ? ' sel-s' : ''}"
+      ${s.disponible ? `onclick="pickSlot(${JSON.stringify(s).replace(/"/g,"'")})"` : 'disabled'}>
+      ${s.hora}
+    </button>
+  `).join('')}</div>`;
+  cont.innerHTML = html;
+}
+
+function pickSlot(slot) {
+  pickedSlot = slot;
+  // If "cualquiera", assign first available barber at this slot
+  if (pickedBarber.id === 'any' && slot.available_bids?.length) {
+    const assigned = slot.available_bids[0];
+    pickedBarber = { ...pickedBarber, bid: assigned.bid, assignedName: assigned.n };
+  }
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('sel-s'));
+  event.currentTarget.classList.add('sel-s');
+  document.getElementById('s4Next').disabled = false;
+}
+
+// ── S5: Form ──────────────────────────────────────────────────
+function renderFormSummary() {
+  const [y,m,d] = pickedDate.split('-').map(Number);
+  const bnom = pickedBarber.id === 'any'
+    ? (pickedBarber.assignedName || 'Próximo disponible')
+    : pickedBarber.n;
+  document.getElementById('formSummary').innerHTML = `
+    <div class="form-sum-row">
+      <span class="form-sum-label">Servicio</span>
+      <span class="form-sum-val">${pickedSvc.n}</span>
+    </div>
+    <div class="form-sum-row">
+      <span class="form-sum-label">Maestro</span>
+      <span class="form-sum-val">${bnom}</span>
+    </div>
+    <div class="form-sum-row">
+      <span class="form-sum-label">Fecha</span>
+      <span class="form-sum-val">${d} de ${MESES[m-1]} ${y}</span>
+    </div>
+    <div class="form-sum-row">
+      <span class="form-sum-label">Hora</span>
+      <span class="form-sum-val">${pickedSlot.hora} – ${pickedSlot.hora_fin}</span>
+    </div>
+    <div class="form-sum-row">
+      <span class="form-sum-label">Precio</span>
+      <span class="form-sum-val">${pickedSvc.price}</span>
+    </div>
+  `;
+}
+
+async function confirmarCita() {
+  const name  = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  if (!name)  { document.getElementById('fName').focus();  return; }
+  if (!phone) { document.getElementById('fPhone').focus(); return; }
+
+  const btn = document.getElementById('s5Confirm');
+  btn.disabled = true;
+  btn.textContent = 'CONFIRMANDO...';
+
+  const bid = pickedBarber.bid;
+
+  try {
+    const body = { bid, svc_id: pickedSvc.id, fecha: pickedDate, hora_inicio: pickedSlot.hora,
+                   client_name: name, client_phone: phone, client_email: email || null };
+    const r = await fetch(`${API}/appointments`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const j = await r.json();
+
+    if (r.status === 409) {
+      alert('Ese horario ya fue reservado. Por favor elige otro.');
+      btn.disabled = false; btn.textContent = 'CONFIRMAR CITA';
+      goStep(4); return;
+    }
+    if (!j.ok) throw new Error(j.error);
+
+    confirmedApt = j.appointment;
+    showConfirmation(name);
+  } catch (e) {
+    alert('No se pudo confirmar la cita. Intenta de nuevo o contáctanos por WhatsApp.');
+    btn.disabled = false; btn.textContent = 'CONFIRMAR CITA';
+  }
+}
+
+function showConfirmation(name) {
+  const [y,m,d] = pickedDate.split('-').map(Number);
+  const bnom = pickedBarber.id === 'any'
+    ? (pickedBarber.assignedName || 'Próximo disponible')
+    : pickedBarber.n;
+  document.getElementById('confirmSub').textContent =
+    `${name}, tu cita está reservada. Te esperamos.`;
+  document.getElementById('confirmCard').innerHTML = `
+    <div class="confirm-row"><span class="confirm-row-label">Servicio</span><span class="confirm-row-val">${pickedSvc.n}</span></div>
+    <div class="confirm-row"><span class="confirm-row-label">Maestro</span><span class="confirm-row-val">${bnom}</span></div>
+    <div class="confirm-row"><span class="confirm-row-label">Fecha</span><span class="confirm-row-val">${d} de ${MESES[m-1]} ${y}</span></div>
+    <div class="confirm-row"><span class="confirm-row-label">Hora</span><span class="confirm-row-val">${pickedSlot.hora}</span></div>
+    <div class="confirm-row"><span class="confirm-row-label">Precio</span><span class="confirm-row-val">${pickedSvc.price}</span></div>
+  `;
+  showStep(6);
+  document.getElementById('backBtn').style.display = 'none';
+  document.getElementById('stepDots').style.display = 'none';
+}
+
+init();
+</script>
+</body>
+</html>

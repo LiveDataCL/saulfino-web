@@ -900,10 +900,13 @@ function closeBPicker() {
 }
 
 /* ── BOOKING ── */
+const BARBER_BID = { samuel:'b3', emerson:'b2', didian:'b1', david:'b4' };
 function agendar(id) {
   const s = SVCS.find(x => x.id === id); if (!s) return;
   if (!selBarber) { showBPicker(id); return; }
-  openBooking(s);
+  const params = new URLSearchParams({ svc_id: id });
+  if (selBarber && selBarber.id !== 'any') params.set('bid', BARBER_BID[selBarber.id] || '');
+  window.location.href = 'agenda.html?' + params.toString();
 }
 function openBooking(s) {
   document.getElementById('bkSvcNm').textContent = s.n;
