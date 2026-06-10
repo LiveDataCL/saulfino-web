@@ -105,6 +105,11 @@ input{font-family:'Montserrat',sans-serif}
 .field input:focus{border-color:#c9a84c}
 .field input::placeholder{color:rgba(255,255,255,.25)}
 .field-hint{font-size:10px;color:rgba(255,255,255,.3);padding-left:2px}
+.phone-split{display:flex;align-items:stretch;background:#131311;border:1.5px solid rgba(201,168,76,.2);border-radius:10px;overflow:hidden;transition:border-color .15s}
+.phone-split:focus-within{border-color:#c9a84c}
+.phone-pfx{padding:13px 10px 13px 14px;font-size:14px;color:rgba(201,168,76,.6);white-space:nowrap;user-select:none}
+.field .phone-split input{background:transparent;border:none;border-radius:0;padding:13px 14px 13px 4px;flex:1}
+.field .phone-split input:focus{border-color:transparent}
 
 /* ── Confirmation ── */
 .confirm-box{text-align:center;padding:16px 0 24px}
@@ -224,7 +229,10 @@ input{font-family:'Montserrat',sans-serif}
         </div>
         <div class="field">
           <label>Teléfono *</label>
-          <input type="tel" id="fPhone" placeholder="+56 9 XXXX XXXX" autocomplete="tel"/>
+          <div class="phone-split">
+            <span class="phone-pfx">+569</span>
+            <input type="tel" id="fPhone" placeholder="12345678" maxlength="8" inputmode="numeric" autocomplete="tel"/>
+          </div>
           <div class="field-hint">Para recordatorio por WhatsApp</div>
         </div>
         <div class="field">
@@ -583,8 +591,9 @@ function renderFormSummary() {
 }
 
 async function confirmarCita() {
-  const name  = document.getElementById('fName').value.trim();
-  const phone = document.getElementById('fPhone').value.trim();
+  const name        = document.getElementById('fName').value.trim();
+  const phoneDigits = document.getElementById('fPhone').value.trim();
+  const phone       = phoneDigits ? '+569' + phoneDigits : '';
   const email = document.getElementById('fEmail').value.trim();
   if (!name)  { document.getElementById('fName').focus();  return; }
   if (!phone) { document.getElementById('fPhone').focus(); return; }
