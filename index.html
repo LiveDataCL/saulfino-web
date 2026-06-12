@@ -13,7 +13,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
-body{font-family:'Montserrat',sans-serif;background:#0A0A08;color:#fff;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:'Montserrat',sans-serif;background:#0A0A08;color:#fff;overflow-x:clip;-webkit-font-smoothing:antialiased}
 ::-webkit-scrollbar{display:none}
 a{color:inherit;text-decoration:none}
 button{font-family:'Montserrat',sans-serif;cursor:pointer;border:none;background:none}
@@ -273,8 +273,12 @@ img{display:block;max-width:100%}
 /* ── MENÚ ── */
 .menu-filters{
   display:flex;gap:8px;overflow-x:auto;
-  margin:20px -20px 24px;padding:0 20px;
+  padding:12px 20px;
   -webkit-overflow-scrolling:touch;
+  position:sticky;top:0;z-index:200;
+  background:#0A0A08;
+  border-bottom:1px solid rgba(201,168,76,.14);
+  box-shadow:0 4px 20px rgba(0,0,0,.55);
 }
 .menu-filters::-webkit-scrollbar{display:none}
 .mf{
@@ -634,14 +638,14 @@ img{display:block;max-width:100%}
     <a class="cl" href="https://wa.me/56900000000" target="_blank">
       <div class="cl-ic">💬</div>AGENDAR POR WHATSAPP
     </a>
-    <a class="cl" href="https://www.instagram.com/salonmensaulfino" target="_blank">
-      <div class="cl-ic">📷</div>SÍGUENOS EN INSTAGRAM
-    </a>
     <a class="cl" href="https://maps.google.com/?q=Galería+Santiago+Centro+Local+222" target="_blank">
       <div class="cl-ic">📍</div>CÓMO LLEGAR
     </a>
     <a class="cl" href="checkin.html">
       <div class="cl-ic">⚡</div>AUTO CHECK-IN · YA LLEGUÉ
+    </a>
+    <a class="cl" href="https://www.instagram.com/salonmensaulfino" target="_blank">
+      <div class="cl-ic">📷</div>SÍGUENOS EN INSTAGRAM
     </a>
   </div>
 </div>
@@ -660,16 +664,16 @@ img{display:block;max-width:100%}
 </div>
 
 <!-- MENÚ -->
-<div class="sec" style="padding-bottom:0;border-bottom:1px solid rgba(201,168,76,.1)">
+<div class="sec" style="padding-bottom:28px">
   <div class="sec-ey">Experiencia exclusiva</div>
   <div class="sec-t">MENÚ DE <span>CABALLEROS</span></div>
   <div class="sec-sep"></div>
-  <div class="menu-filters" id="mFilters">
-    <button class="mf on" data-f="all">Todos</button>
-    <button class="mf" data-f="clasico">Clásicos</button>
-    <button class="mf" data-f="combo">Combos</button>
-    <button class="mf" data-f="premium">Tratamientos</button>
-  </div>
+</div>
+<div class="menu-filters" id="mFilters">
+  <button class="mf on" data-f="all">Todos</button>
+  <button class="mf" data-f="clasico">Clásicos</button>
+  <button class="mf" data-f="combo">Combos</button>
+  <button class="mf" data-f="premium">Tratamientos</button>
 </div>
 <div class="svc-cards" id="svcCards"></div>
 
