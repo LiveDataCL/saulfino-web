@@ -859,7 +859,8 @@ document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
     _braf = requestAnimationFrame(() => { _braf = null; updateBarbFocus(); });
   }, {passive:true});
 
-  updateBarbFocus();
+  const _initCards = scroller.querySelectorAll('.bc');
+  if (_initCards.length) _initCards[0].classList.add('focus');
 })();
 
 function pickBarber(id) {
@@ -909,8 +910,10 @@ function renderSvcs(f) {
 }
 renderSvcs('all');
 
+let _activeFilter = 'all';
 document.getElementById('mFilters').addEventListener('click', e => {
   const b = e.target.closest('.mf'); if (!b) return;
+  _activeFilter = b.dataset.f;
   document.querySelectorAll('.mf').forEach(x => x.classList.remove('on'));
   b.classList.add('on'); renderSvcs(b.dataset.f);
 });
@@ -921,8 +924,7 @@ window.addEventListener('scroll', function() {
   if (_svcRaf) return;
   _svcRaf = requestAnimationFrame(function() {
     _svcRaf = null;
-    const activeBtn = document.querySelector('.mf.on');
-    if (!activeBtn || activeBtn.dataset.f !== 'all') return;
+    if (_activeFilter !== 'all') return;
     const barH = document.getElementById('mFilters').offsetHeight;
     const line = barH + 16;
     const cards = document.querySelectorAll('#svcCards .svc-card[data-cat]');
