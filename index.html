@@ -256,9 +256,13 @@ img{display:block;max-width:100%}
   flex:0 0 185px;scroll-snap-align:start;
   background:#131311;border:1.5px solid rgba(201,168,76,.18);
   border-radius:16px;padding:20px 16px 16px;text-align:center;cursor:pointer;
-  transition:border-color .18s;
+  transform:scale(0.93);opacity:0.75;
+  transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .22s ease,border-color .22s ease,box-shadow .22s ease;
+  will-change:transform,opacity;user-select:none;
 }
-.bc.sel{border-color:#c9a84c;background:rgba(201,168,76,.05)}
+.bc.focus{transform:scale(1.0);opacity:1;border-color:rgba(201,168,76,.3)}
+.bc.sel{transform:scale(1.07) !important;opacity:1 !important;border-color:#c9a84c !important;background:rgba(201,168,76,.05);box-shadow:0 0 0 1px rgba(201,168,76,.35),0 14px 40px rgba(201,168,76,.18),0 4px 20px rgba(0,0,0,.6);z-index:2}
+.bc.dim{transform:scale(0.91) !important;opacity:0.38 !important;border-color:rgba(201,168,76,.06) !important;box-shadow:none !important}
 .bc-av{
   width:130px;height:130px;border-radius:50%;margin:0 auto 14px;overflow:hidden;
   background:linear-gradient(135deg,#252518,#151510);
@@ -828,6 +832,21 @@ document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
   ).join('');
   const dots = dotsEl.querySelectorAll('.barbers-dot');
 
+  function updateBarbFocus() {
+    if (window._barbSel) return;
+    const scrollCX = scroller.getBoundingClientRect().left + scroller.offsetWidth / 2;
+    let bestDist = Infinity, bestIdx = 0;
+    const cards = scroller.querySelectorAll('.bc');
+    cards.forEach((c, i) => {
+      const r = c.getBoundingClientRect();
+      const dist = Math.abs((r.left + r.width / 2) - scrollCX);
+      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+    });
+    cards.forEach((c, i) => c.classList.toggle('focus', i === bestIdx));
+  }
+  window._barbUpdateFocus = updateBarbFocus;
+
+  let _braf = null;
   let hintGone = false;
   scroller.addEventListener('scroll', () => {
     if (!hintGone && scroller.scrollLeft > 10) {
@@ -836,15 +855,32 @@ document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
     }
     const idx = Math.min(Math.round(scroller.scrollLeft / cardW), dots.length - 1);
     dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    if (_braf) return;
+    _braf = requestAnimationFrame(() => { _braf = null; updateBarbFocus(); });
   }, {passive:true});
+
+  updateBarbFocus();
 })();
 
 function pickBarber(id) {
-  selBarber = BARBERS.find(b => b.id === id);
-  document.querySelectorAll('.bc').forEach(c => c.classList.toggle('sel', c.dataset.id === id));
-  const el = document.getElementById('barberPicked');
-  el.style.display = 'block';
-  document.getElementById('barberPickedName').textContent = selBarber.n;
+  const cards = document.querySelectorAll('.bc');
+  const alreadySel = window._barbSel === id;
+  window._barbSel = alreadySel ? null : id;
+  cards.forEach(c => { c.classList.remove('sel','dim','focus'); });
+  if (window._barbSel) {
+    selBarber = BARBERS.find(b => b.id === id);
+    cards.forEach(c => {
+      if (c.dataset.id === id) c.classList.add('sel');
+      else c.classList.add('dim');
+    });
+    const el = document.getElementById('barberPicked');
+    el.style.display = 'block';
+    document.getElementById('barberPickedName').textContent = selBarber.n;
+  } else {
+    selBarber = null;
+    document.getElementById('barberPicked').style.display = 'none';
+    window._barbUpdateFocus && window._barbUpdateFocus();
+  }
 }
 
 /* ── RENDER SERVICES ── */
