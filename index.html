@@ -841,7 +841,7 @@ function pickBarber(id) {
 function renderSvcs(f) {
   const list = f === 'all' ? SVCS : SVCS.filter(s => s.cat === f);
   document.getElementById('svcCards').innerHTML = list.map(s => `
-    <div class="svc-card">
+    <div class="svc-card" data-cat="${s.cat}">
       ${s.img ? (s.img2 ? '<div class="svc-img-slide"><img src="'+s.img+'" alt="'+s.n+'" loading="lazy"/><img src="'+s.img2+'" alt="'+s.n+'" loading="lazy"/></div>' : '<img src="'+s.img+'" alt="'+s.n+'" loading="lazy"/>') : ''}
       <div class="svc-body">
         <div class="svc-name">${s.n}</div>
@@ -868,6 +868,27 @@ document.getElementById('mFilters').addEventListener('click', e => {
   document.querySelectorAll('.mf').forEach(x => x.classList.remove('on'));
   b.classList.add('on'); renderSvcs(b.dataset.f);
 });
+
+/* ── SCROLL → highlight active category ── */
+let _svcRaf = null;
+window.addEventListener('scroll', function() {
+  if (_svcRaf) return;
+  _svcRaf = requestAnimationFrame(function() {
+    _svcRaf = null;
+    const activeBtn = document.querySelector('.mf.on');
+    if (!activeBtn || activeBtn.dataset.f !== 'all') return;
+    const barH = document.getElementById('mFilters').offsetHeight;
+    const line = barH + 16;
+    const cards = document.querySelectorAll('#svcCards .svc-card[data-cat]');
+    let cat = null;
+    for (const c of cards) {
+      if (c.getBoundingClientRect().top <= line) cat = c.dataset.cat;
+      else break;
+    }
+    const target = cat || 'all';
+    document.querySelectorAll('.mf').forEach(b => b.classList.toggle('on', b.dataset.f === target));
+  });
+}, {passive:true});
 
 /* ── BARBER PICKER ── */
 let pendingSvcId = null;
