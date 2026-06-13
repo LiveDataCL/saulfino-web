@@ -577,11 +577,7 @@ const SERVICES = [
   {id:'mat_barba',   name:'Matizado Canas Barba',        price:5000,  time:'15–20 min', icon:'🎨'},
 ];
 
-/* Demo queue (existing clients) */
-const DEMO_QUEUE = [
-  {name:'Carlos M.', meta:'Corte + Barba · Emerson', status:'current'},
-  {name:'Rodrigo F.', meta:'Corte Clásico · Samuel', status:'waiting'},
-];
+const API = 'https://barberpilot-api-production.up.railway.app';
 
 /* ─────── STATE ─────── */
 let currentStep = 1;
@@ -706,44 +702,81 @@ function showStep(n){
   window.scrollTo(0,0);
 }
 
-function submitCheckin(){
-  // Build confirm screen
+async function submitCheckin(){
   const barberName = state.barber ? (state.barber.id==='any'?'Próximo disponible':state.barber.name) : '—';
-  const svcNames = state.services.map(s=>SERVICES.find(sv=>sv.id===s.id)?.name||s.id).join(', ');
+  const svcNames = state.services.map(s=>SERVICES.find(sv=>sv.id===s.id)?.name||s.id).join(' + ');
   const total = state.services.reduce((a,s)=>a+s.price,0);
-  const pos = DEMO_QUEUE.length + 1;
-  const waitMin = Math.max(5, pos * 15 - 5);
+  const barberIdToSend = state.barber?.id || 'any';
 
-  document.getElementById('confirm_name_display').textContent = state.name.split(' ')[0];
-  document.getElementById('cc_client').textContent = state.name;
-  document.getElementById('cc_barber').textContent = barberName;
-  document.getElementById('cc_services').textContent = svcNames;
-  document.getElementById('cc_drink').textContent = state.drink||'—';
-  document.getElementById('cc_total').textContent = '$'+total.toLocaleString('es-CL');
-  document.getElementById('wt_min').textContent = '~'+waitMin;
+  const btn = document.getElementById('btnNext');
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
 
-  // Queue
-  const rows = document.getElementById('queueRows');
-  rows.innerHTML = DEMO_QUEUE.map((q,i)=>`
-    <div class="qr ${q.status}">
-      <div class="q-pos">${i+1}</div>
-      <div class="q-info"><div class="q-name">${q.name}</div><div class="q-meta">${q.meta}</div></div>
-      <div class="q-status ${q.status==='current'?'qs-c':'qs-w'}">${q.status==='current'?'✂ En silla':'Esperando'}</div>
-    </div>
-  `).join('') + `
-    <div class="qr mine">
-      <div class="q-pos">${pos}</div>
-      <div class="q-info"><div class="q-name">Tú · ${state.name}</div><div class="q-meta">${svcNames} · ${barberName}</div></div>
-      <div class="q-status qs-m">✓ Confirmado</div>
-    </div>
-  `;
+  function populateCard(assignedBarberDisplay, waitMin){
+    document.getElementById('confirm_name_display').textContent = state.name.split(' ')[0];
+    document.getElementById('cc_client').textContent = state.name;
+    document.getElementById('cc_barber').textContent = assignedBarberDisplay;
+    document.getElementById('cc_services').textContent = svcNames;
+    document.getElementById('cc_drink').textContent = state.drink||'—';
+    document.getElementById('cc_total').textContent = '$'+total.toLocaleString('es-CL');
+    document.getElementById('wt_min').textContent = waitMin!=null?'~'+waitMin:'—';
+    const waMsg = `✅ Ya llegué a Salon Men Saúl Fino.\n\nNombre: ${state.name}\nBarbero: ${assignedBarberDisplay}\nServicios: ${svcNames}\nBebida: ${state.drink}\nTotal: $${total.toLocaleString('es-CL')}\n\n_Check-in via sucursal virtual._`;
+    document.getElementById('wa_notify_btn').href = `https://wa.me/${WA}?text=${encodeURIComponent(waMsg)}`;
+  }
 
-  // WA notify link
-  const waMsg = `✅ Ya llegué a Salon Men Saúl Fino.\n\nNombre: ${state.name}\nBarbero: ${barberName}\nServicios: ${svcNames}\nBebida: ${state.drink}\nTotal: $${total.toLocaleString('es-CL')}\n\n_Check-in via sucursal virtual._`;
-  document.getElementById('wa_notify_btn').href = `https://wa.me/${WA}?text=${encodeURIComponent(waMsg)}`;
+  try {
+    const res = await fetch(API+'/queue/checkin', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({client_name:state.name, phone:null, barber_id:barberIdToSend, service:svcNames, drink:state.drink})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error||'Error en el servidor');
 
-  currentStep = 5;
-  showStep(5);
+    const assigned = data.assigned_barber || barberIdToSend;
+    const assignedDisplay = state.barber?.id==='any'
+      ? assigned.charAt(0).toUpperCase()+assigned.slice(1)
+      : barberName;
+
+    populateCard(assignedDisplay, data.estimated_wait_min);
+    fetchLiveQueue(data.queue_position);
+
+    currentStep = 5;
+    showStep(5);
+
+  } catch(err) {
+    populateCard(barberName, null);
+    document.getElementById('queueRows').innerHTML =
+      '<div style="padding:14px 18px;font-size:13px;color:#F87171">⚠ No se pudo conectar. Acércate al barbero para confirmar tu turno.</div>';
+    currentStep = 5;
+    showStep(5);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✦ Confirmar llegada →';
+  }
+}
+
+async function fetchLiveQueue(myPos){
+  try {
+    const res = await fetch(API+'/queue');
+    if(!res.ok) return;
+    const data = await res.json();
+    const queue = data.queue || [];
+    const rows = document.getElementById('queueRows');
+    if(!queue.length){
+      rows.innerHTML = `<div class="qr mine"><div class="q-pos">${myPos}</div><div class="q-info"><div class="q-name">Tú · ${state.name}</div><div class="q-meta">${state.services.map(s=>SERVICES.find(sv=>sv.id===s.id)?.name||s.id).join(' + ')}</div></div><div class="q-status qs-m">✓ Confirmado</div></div>`;
+      return;
+    }
+    rows.innerHTML = queue.map((q,i)=>{
+      const isMe = q.client_name===state.name;
+      const isSvc = q.status==='IN_SERVICE';
+      const cls = isMe?'mine':isSvc?'current':'';
+      const stTxt = isSvc?'✂ En silla':isMe?'✓ Confirmado':'Esperando';
+      const stCls = isSvc?'qs-c':isMe?'qs-m':'qs-w';
+      return `<div class="qr ${cls}"><div class="q-pos">${i+1}</div><div class="q-info"><div class="q-name">${isMe?'Tú · ':''}${q.client_name}</div><div class="q-meta">${q.service} · ${q.barber_id}</div></div><div class="q-status ${stCls}">${stTxt}</div></div>`;
+    }).join('');
+  } catch(e){ /* silently fail — queue display is non-critical */ }
 }
 
 /* ─────── INIT ─────── */
