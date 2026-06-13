@@ -310,6 +310,34 @@ input{font-family:var(--ff-b);-webkit-appearance:none}
 .wt-num{font-family:var(--ff-d);font-size:52px;font-weight:600;color:var(--gold);line-height:1}
 .wt-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--g3);margin-top:4px}
 .wt-desc{font-size:13px;color:var(--g4);line-height:1.5;flex:1}
+/* ═══════ PHONE STEP ═══════ */
+.phone-wrap{position:relative}
+.phone-prefix{
+  position:absolute;left:20px;top:50%;transform:translateY(-50%);
+  font-size:18px;color:var(--g4);font-weight:600;pointer-events:none;
+  font-family:var(--ff-b);letter-spacing:.03em;
+}
+.phone-input{padding-left:68px !important}
+.step-divider{
+  display:flex;align-items:center;gap:10px;
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--g2);
+}
+.step-divider::before,.step-divider::after{content:'';flex:1;height:1px;background:var(--g1)}
+/* Recognition card */
+.recog-card{
+  background:rgba(34,197,94,.05);
+  border:1.5px solid rgba(34,197,94,.25);
+  border-radius:var(--r);padding:16px 18px;
+  animation:fadeUp .2s ease both;
+}
+.recog-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#22C55E;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.recog-label::before{content:'';width:6px;height:6px;border-radius:50%;background:#22C55E;animation:p 1.5s infinite}
+.recog-name{font-family:var(--ff-d);font-size:32px;font-weight:600;color:var(--white);line-height:1;margin-bottom:6px}
+.recog-meta{font-size:12px;color:var(--g4);line-height:1.6}
+.recog-notas{margin-top:10px;padding-top:10px;border-top:1px solid rgba(201,168,76,.15);font-size:12px;color:var(--gold);font-style:italic;line-height:1.5}
+.recog-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.recog-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(201,168,76,.08);color:var(--gold);border:1px solid rgba(201,168,76,.2)}
+
 /* Action buttons on confirm */
 .action-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .action-btn{
@@ -390,7 +418,7 @@ input{font-family:var(--ff-b);-webkit-appearance:none}
     <div class="progress-fill" id="progressFill" style="width:20%"></div>
   </div>
   <div class="step-labels">
-    <div class="sl-item active" id="lbl1">Nombre</div>
+    <div class="sl-item active" id="lbl1">Teléfono</div>
     <div class="sl-item" id="lbl2">Barbero</div>
     <div class="sl-item" id="lbl3">Servicios</div>
     <div class="sl-item" id="lbl4">Bebida</div>
@@ -400,23 +428,36 @@ input{font-family:var(--ff-b);-webkit-appearance:none}
   <!-- CONTENT AREA (all steps) -->
   <div class="content-area">
 
-    <!-- PASO 1 — NOMBRE -->
+    <!-- PASO 1 — TELÉFONO + NOMBRE -->
     <div class="step-panel active" id="step1">
       <div class="step-heading">
         <div class="step-num">Paso 1 de 4</div>
-        <div class="step-title">Hola,<br/><em>¿cómo te<br/>llamas?</em></div>
-        <p class="step-sub">Tu nombre para avisar a tu barbero cuando estés listo.</p>
+        <div class="step-title">¿Cuál es tu<br/><em>número?</em></div>
+        <p class="step-sub">Si eres cliente frecuente, te reconocemos y completamos todo automáticamente.</p>
       </div>
       <div class="name-input-wrap">
-        <input class="name-input" type="text" id="inp_name" placeholder="Tu nombre..." autocomplete="given-name" autocorrect="off" spellcheck="false" oninput="updateNextBtn()"/>
-        <div class="name-hint">Solo necesitamos tu nombre. Sin datos adicionales.</div>
-        <div class="quick-names" id="quickNames">
-          <!-- demo regulars — en producción se cargan desde API -->
-          <button class="qn-btn" onclick="setName('Carlos')">Carlos</button>
-          <button class="qn-btn" onclick="setName('Rodrigo')">Rodrigo</button>
-          <button class="qn-btn" onclick="setName('Felipe')">Felipe</button>
-          <button class="qn-btn" onclick="setName('Sebastián')">Sebastián</button>
+        <!-- Phone -->
+        <div class="phone-wrap">
+          <span class="phone-prefix">+56</span>
+          <input class="name-input phone-input" type="tel" id="inp_phone"
+                 placeholder="9 XXXX XXXX" maxlength="12" inputmode="numeric"
+                 autocomplete="tel" oninput="onPhoneInput(this)"/>
         </div>
+        <!-- Recognition card (hidden until match found) -->
+        <div class="recog-card" id="recogCard" style="display:none">
+          <div class="recog-label">Te reconocemos</div>
+          <div class="recog-name" id="recogName"></div>
+          <div class="recog-meta" id="recogMeta"></div>
+          <div class="recog-tags" id="recogTags"></div>
+          <div class="recog-notas" id="recogNotas" style="display:none"></div>
+        </div>
+        <div class="step-divider">confirma tu nombre</div>
+        <!-- Name (required; auto-filled if recognized) -->
+        <input class="name-input" type="text" id="inp_name"
+               placeholder="Tu nombre..."
+               autocomplete="given-name" autocorrect="off" spellcheck="false"
+               oninput="onNameInput()"/>
+        <div class="name-hint">Si no tienes número o prefieres omitirlo, escribe solo tu nombre.</div>
       </div>
     </div>
 
@@ -582,7 +623,8 @@ const API = 'https://barberpilot-api-production.up.railway.app';
 /* ─────── STATE ─────── */
 let currentStep = 1;
 let totalSteps = 4;
-let state = {name:'', barber:null, services:[], drink:null};
+let state = {name:'', phone:'', barber:null, services:[], drink:null, cliente:null, _prefBarber:null, _prefDrink:null};
+let _phoneLookupTimer = null;
 
 /* ─────── RENDER BARBEROS ─────── */
 function renderBarbers(){
@@ -599,8 +641,76 @@ function renderBarbers(){
 }
 
 function selectBarber(id){
-  state.barber = BARBEROS.find(b=>b.id===id);
+  state.barber = BARBEROS.find(b=>b.id===id) || null;
   document.querySelectorAll('.bc-item').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));
+  updateNextBtn();
+}
+
+/* ─────── PHONE LOOKUP ─────── */
+function onPhoneInput(el){
+  const raw = el.value.replace(/\D/g,'');
+  el.value = raw;
+  state.phone = raw.length>=8 ? '+56'+raw : '';
+  clearTimeout(_phoneLookupTimer);
+  if(raw.length>=8){
+    _phoneLookupTimer = setTimeout(()=>lookupPhone('+56'+raw), 500);
+  } else {
+    clearRecog();
+  }
+  updateNextBtn();
+}
+
+async function lookupPhone(phone){
+  try {
+    const res = await fetch(API+'/clientes/lookup?phone='+encodeURIComponent(phone));
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data.found){ clearRecog(); return; }
+    const c = data.cliente;
+    state.cliente = c;
+    // Auto-fill name if empty
+    if(!state.name){
+      document.getElementById('inp_name').value = c.nombre;
+      state.name = c.nombre;
+    }
+    // Store pre-selections for later steps
+    if(c.bid_registro) state._prefBarber = c.bid_registro;
+    // Infer drink from notas
+    const n = (c.notas||'').toLowerCase();
+    if(n.includes('café')||n.includes('cafe')||n.includes('capuchino')) state._prefDrink='Café ☕';
+    else if(n.includes('agua')) state._prefDrink='Agua 💧';
+    else if(n.includes('bebida')||n.includes('jugo')) state._prefDrink='Bebida fría 🥤';
+    // Build recognition card
+    const meta = [];
+    if(c.visitas) meta.push(c.visitas+' visita'+(c.visitas===1?'':'s'));
+    if(c.ultima_visita){
+      const d=new Date(c.ultima_visita), now=new Date();
+      const days=Math.floor((now-d)/86400000);
+      meta.push('última visita: '+(days===0?'hoy':days===1?'ayer':days<7?'hace '+days+' días':days<30?'hace '+(Math.floor(days/7))+'sem.':'hace '+(Math.floor(days/30))+'mes'));
+    }
+    if(data.ultimos_servicios&&data.ultimos_servicios.length) meta.push(data.ultimos_servicios[0].snom);
+    document.getElementById('recogName').textContent = c.nombre;
+    document.getElementById('recogMeta').textContent = meta.join(' · ');
+    // Tags: DOB, visit count, preferred barber
+    const tags = [];
+    if(c.cumpleanos) tags.push('🎂 '+c.cumpleanos);
+    if(c.bid_registro) tags.push('✂ '+c.bid_registro.charAt(0).toUpperCase()+c.bid_registro.slice(1));
+    if(c.servicios_frecuentes&&c.servicios_frecuentes.length) c.servicios_frecuentes.slice(0,3).forEach(s=>tags.push(s));
+    document.getElementById('recogTags').innerHTML = tags.map(t=>`<span class="recog-tag">${t}</span>`).join('');
+    const nEl = document.getElementById('recogNotas');
+    if(c.notas){ nEl.textContent = '📋 '+c.notas; nEl.style.display='block'; } else { nEl.style.display='none'; }
+    document.getElementById('recogCard').style.display='block';
+    updateNextBtn();
+  } catch(e){}
+}
+
+function clearRecog(){
+  state.cliente=null; state._prefBarber=null; state._prefDrink=null;
+  document.getElementById('recogCard').style.display='none';
+}
+
+function onNameInput(){
+  state.name = document.getElementById('inp_name').value.trim();
   updateNextBtn();
 }
 
@@ -641,13 +751,6 @@ function selectDrink(el){
   document.querySelectorAll('.dopt').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected');
   state.drink = el.dataset.d;
-  updateNextBtn();
-}
-
-/* ─────── NAME ─────── */
-function setName(n){
-  document.getElementById('inp_name').value = n;
-  state.name = n;
   updateNextBtn();
 }
 
@@ -698,6 +801,12 @@ function showStep(n){
   document.getElementById('bottomNav').style.display = n===5?'none':'flex';
   const hero = document.getElementById('stepHero');
   if(hero) hero.classList.toggle('visible', n===1);
+  // Apply pre-fills from returning customer recognition
+  if(n===2 && state._prefBarber) selectBarber(state._prefBarber);
+  if(n===4 && state._prefDrink){
+    const dopt = document.querySelector(`.dopt[data-d="${state._prefDrink}"]`);
+    if(dopt) selectDrink(dopt);
+  }
   updateNextBtn();
   window.scrollTo(0,0);
 }
@@ -728,7 +837,7 @@ async function submitCheckin(){
     const res = await fetch(API+'/queue/checkin', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({client_name:state.name, phone:null, barber_id:barberIdToSend, service:svcNames, drink:state.drink})
+      body:JSON.stringify({client_name:state.name, phone:state.phone||null, barber_id:barberIdToSend, service:svcNames, drink:state.drink})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
