@@ -1084,18 +1084,21 @@ function confirmBooking() {
   }
 
   function bannerBg(st){
-    if(st==='IMMINENT') return 'linear-gradient(150deg,#7f1d1d 0%,#dc2626 55%,#f87171 100%)';
-    if(st==='IN_SERVICE'||st==='DONE') return 'linear-gradient(150deg,#14532d 0%,#16a34a 55%,#4ade80 100%)';
+    if(st==='IMMINENT') return 'linear-gradient(150deg,#14532d 0%,#16a34a 55%,#4ade80 100%)';
+    if(st==='IN_SERVICE'||st==='DONE') return 'linear-gradient(150deg,#f8f7f3 0%,#ffffff 100%)';
     return 'linear-gradient(150deg,#9A7528 0%,#C9A84C 55%,#E4C66A 100%)';
   }
 
   function dotColor(st){
-    if(st==='IMMINENT'||st==='IN_SERVICE'||st==='DONE') return 'rgba(255,255,255,.9)';
+    if(st==='IMMINENT') return 'rgba(255,255,255,.9)';
+    if(st==='IN_SERVICE'||st==='DONE') return '#16a34a';
     return '#0A0A08';
   }
 
   function textColor(st){
-    return (st==='IMMINENT'||st==='IN_SERVICE'||st==='DONE') ? '#fff' : '#0A0A08';
+    if(st==='IMMINENT') return '#fff';
+    if(st==='IN_SERVICE'||st==='DONE') return '#0A0A08';
+    return '#0A0A08';
   }
 
   async function poll(){
@@ -1114,7 +1117,7 @@ function confirmBooking() {
       titleEl.textContent = `${q.name} · ${q.barber}`;
       titleEl.style.color = tc;
       subEl.textContent = statusLabel(e.status, e.queue_position, e.estimated_wait_min);
-      subEl.style.color = (e.status==='IMMINENT'||e.status==='IN_SERVICE'||e.status==='DONE') ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.68)';
+      subEl.style.color = e.status==='IMMINENT' ? 'rgba(255,255,255,.8)' : 'rgba(0,0,0,.68)';
       dot.style.background = dotColor(e.status);
       banner.style.background = bannerBg(e.status);
 
