@@ -656,7 +656,7 @@ async function initBarberStatus(){
       const el = document.getElementById('bwt_'+b.id);
       if(!el) return;
       const info = sum[b.id];
-      if(!info || info.queue_length===0){
+      if(!info || info.next_free_in===0){
         el.textContent='Libre'; el.classList.add('libre');
       } else {
         el.textContent='~'+info.next_free_in+' min';
