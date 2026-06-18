@@ -922,7 +922,8 @@ async function fetchLiveQueue(myPos){
       const cls = isMe?'mine':isSvc?'current':'';
       const stTxt = isSvc?'✂ En silla':isMe?'✓ Confirmado':'Esperando';
       const stCls = isSvc?'qs-c':isMe?'qs-m':'qs-w';
-      return `<div class="qr ${cls}"><div class="q-pos">${i+1}</div><div class="q-info"><div class="q-name">${isMe?'Tú · ':''}${q.client_name}</div><div class="q-meta">${q.service} · ${q.barber_id}</div></div><div class="q-status ${stCls}">${stTxt}</div></div>`;
+      const barberDisplay = q.barber_id ? q.barber_id.charAt(0).toUpperCase()+q.barber_id.slice(1) : '';
+      return `<div class="qr ${cls}"><div class="q-pos">${i+1}</div><div class="q-info"><div class="q-name">${isMe?'Tú · ':''}${q.client_name}</div><div class="q-meta">${q.service} · ${barberDisplay}</div></div><div class="q-status ${stCls}">${stTxt}</div></div>`;
     }).join('');
   } catch(e){ /* silently fail — queue display is non-critical */ }
 }
