@@ -39,6 +39,28 @@ img{display:block;max-width:100%}
   max-height:92dvh;overflow-y:auto;
 }
 .bk-sheet.on{display:block;animation:slideUp .28s cubic-bezier(.4,0,.2,1)}
+/* ── SERVICE PICKER SHEET ── */
+#sp-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:800}
+#sp-ov.on{display:block}
+#sp-sheet{display:none;position:fixed;bottom:0;left:0;right:0;z-index:801;background:#131311;border-radius:20px 20px 0 0;border-top:1px solid rgba(201,168,76,.25);max-height:88dvh;overflow-y:auto;flex-direction:column}
+#sp-sheet.on{display:flex;animation:slideUp .28s cubic-bezier(.4,0,.2,1)}
+.sp-handle{width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:12px auto 4px;flex-shrink:0}
+.sp-hdr{padding:16px 20px 14px;border-bottom:1px solid rgba(201,168,76,.12);display:flex;align-items:center;gap:14px;flex-shrink:0}
+.sp-av{width:46px;height:46px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(201,168,76,.4);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;color:#c9a84c;background:#1c1c18}
+.sp-av img{width:100%;height:100%;object-fit:cover;object-position:top}
+.sp-hdr-text{flex:1}
+.sp-hdr-title{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600;color:#f5f4f0;line-height:1.1}
+.sp-hdr-sub{font-size:11px;color:rgba(245,244,240,.4);margin-top:3px;text-transform:uppercase;letter-spacing:.07em}
+.sp-close{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.07);border:none;cursor:pointer;color:rgba(245,244,240,.5);font-size:18px;line-height:34px;text-align:center;flex-shrink:0;transition:background .12s}
+.sp-close:hover{background:rgba(255,255,255,.14);color:#f5f4f0}
+.sp-list{padding:10px 14px 32px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.sp-cat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(201,168,76,.5);margin:10px 2px 4px}
+.sp-row{display:flex;align-items:center;gap:10px;padding:13px 14px;background:#1c1c18;border:1px solid rgba(201,168,76,.1);border-radius:12px;cursor:pointer;transition:border-color .12s,background .12s;-webkit-tap-highlight-color:transparent}
+.sp-row:hover,.sp-row:active{border-color:rgba(201,168,76,.4);background:#222218}
+.sp-row-info{flex:1;min-width:0}
+.sp-row-name{font-size:14px;font-weight:600;color:#f5f4f0;line-height:1.2}
+.sp-row-meta{font-size:11px;color:rgba(245,244,240,.38);margin-top:2px}
+.sp-row-price{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:#c9a84c;white-space:nowrap;flex-shrink:0}
 .bk-handle{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:12px auto 0}
 .bk-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px}
 .bk-title{font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#c9a84c}
@@ -702,6 +724,19 @@ img{display:block;max-width:100%}
   <button class="mf" data-f="combo">Combos</button>
   <button class="mf" data-f="premium">Tratamientos</button>
 </div>
+<div id="sp-ov" onclick="closeSvcPicker()"></div>
+<div id="sp-sheet">
+  <div class="sp-handle"></div>
+  <div class="sp-hdr">
+    <div class="sp-av" id="spAv"></div>
+    <div class="sp-hdr-text">
+      <div class="sp-hdr-title" id="spName"></div>
+      <div class="sp-hdr-sub">Elige tu servicio</div>
+    </div>
+    <button class="sp-close" onclick="closeSvcPicker()">&#x2715;</button>
+  </div>
+  <div class="sp-list" id="spList"></div>
+</div>
 <div class="svc-cards" id="svcCards"></div>
 
 <!-- TESTIMONIOS -->
@@ -888,6 +923,7 @@ function pickBarber(id) {
     const el = document.getElementById('barberPicked');
     el.style.display = 'block';
     document.getElementById('barberPickedName').textContent = selBarber.n;
+    showSvcPicker(id);
   } else {
     selBarber = null;
     document.getElementById('barberPicked').style.display = 'none';
@@ -896,6 +932,51 @@ function pickBarber(id) {
 }
 
 /* ── RENDER SERVICES ── */
+function showSvcPicker(barberId) {
+  var b = BARBERS.find(function(x){ return x.id === barberId; });
+  if (!b) return;
+  var avEl = document.getElementById('spAv');
+  avEl.innerHTML = b.photo ? '<img src="'+b.photo+'" alt="'+b.n+'">' : b.ini;
+  document.getElementById('spName').textContent = b.n;
+
+  var svcs = SVCS.filter(function(s){
+    return !s.barbers || s.barbers.length === 0 || s.barbers.includes(barberId);
+  });
+
+  var cats = [
+    {key:'clasico', label:'Clásicos'},
+    {key:'combo',   label:'Combos'},
+    {key:'premium', label:'Premium'}
+  ];
+  var html = '';
+  cats.forEach(function(cat){
+    var items = svcs.filter(function(s){ return s.cat === cat.key; });
+    if (!items.length) return;
+    html += '<div class="sp-cat-lbl">'+cat.label+'</div>';
+    items.forEach(function(s){
+      html += '<div class="sp-row" onclick="pickSvcFromPicker(\''+s.id+'\')">'
+        +'<div class="sp-row-info">'
+        +'<div class="sp-row-name">'+s.n+'</div>'
+        +'<div class="sp-row-meta">&#x23F1; '+s.time+'</div>'
+        +'</div>'
+        +'<div class="sp-row-price">'+(s.priceStr||fmt(s.price))+'</div>'
+        +'</div>';
+    });
+  });
+  document.getElementById('spList').innerHTML = html;
+  document.getElementById('sp-sheet').classList.add('on');
+  document.getElementById('sp-ov').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+function closeSvcPicker() {
+  document.getElementById('sp-sheet').classList.remove('on');
+  document.getElementById('sp-ov').classList.remove('on');
+  document.body.style.overflow = '';
+}
+function pickSvcFromPicker(svcId) {
+  closeSvcPicker();
+  agendar(svcId);
+}
 function renderSvcs(f) {
   const list = f === 'all' ? SVCS : SVCS.filter(s => s.cat === f);
   document.getElementById('svcCards').innerHTML = list.map(s => `
