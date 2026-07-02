@@ -57,12 +57,6 @@ input{font-family:'Montserrat',sans-serif}
 .b-card.sel .b-av{border-color:#c9a84c}
 .b-nm{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;margin-bottom:3px}
 .b-sp{font-size:10px;color:rgba(201,168,76,.65);letter-spacing:.05em}
-.b-any{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:14px 16px;background:#131311;border:1.5px solid rgba(201,168,76,.18);border-radius:14px;cursor:pointer;transition:border-color .15s}
-.b-any.sel{border-color:#c9a84c;background:rgba(201,168,76,.06)}
-.b-any-icon{width:44px;height:44px;border-radius:50%;background:rgba(201,168,76,.1);border:1.5px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-size:20px;color:#c9a84c;flex-shrink:0}
-.b-any-text{text-align:left}
-.b-any-nm{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;margin-bottom:2px}
-.b-any-sp{font-size:10px;color:rgba(201,168,76,.6)}
 
 /* ── Service pills ── */
 .svc-grid{display:flex;flex-direction:column;gap:10px}
@@ -173,13 +167,7 @@ input{font-family:'Montserrat',sans-serif}
         <div class="stitle-big">¿Con quién quieres tu cita?</div>
       </div>
       <div class="barbers-grid" id="barbersGrid"></div>
-      <div class="b-any" id="bAny" onclick="selBarber('any')">
-        <div class="b-any-icon">★</div>
-        <div class="b-any-text">
-          <div class="b-any-nm">Cualquiera</div>
-          <div class="b-any-sp">El próximo disponible</div>
-        </div>
-      </div>
+
       <button class="cta" id="s1Next" onclick="goStep(2)" disabled>CONTINUAR</button>
     </div>
 
@@ -283,7 +271,7 @@ const BARBERS_DATA = [
   { id: 'samuel',  bid: 'b3', n: 'SAMUEL',     spec: 'Cortes · Barba', ini: 'S' },
   { id: 'emerson', bid: 'b2', n: 'EMERSON',    spec: 'Diseños increíbles', ini: 'E' },
   { id: 'didian',  bid: 'b1', n: 'DIDIAN',     spec: 'Fades · Tapers', ini: 'D' },
-
+  { id: 'steven',  bid: 'b5', n: 'STEVEN',     spec: 'Cortes · Barba', ini: 'ST' },
 ];
 
 const SVCS_DATA = [
@@ -388,25 +376,17 @@ function renderBarbers() {
       <div class="b-sp">${b.spec}</div>
     </div>
   `).join('');
-  if (pickedBarber?.id === 'any') document.getElementById('bAny').classList.add('sel');
   document.getElementById('s1Next').disabled = !pickedBarber;
 }
 
 function selBarber(id) {
-  if (id === 'any') {
-    pickedBarber = { id: 'any', bid: null, n: 'Cualquiera', spec: 'Próximo disponible', ini: '★' };
-    document.querySelectorAll('.b-card').forEach(c => c.classList.remove('sel'));
-    document.getElementById('bAny').classList.add('sel');
-  } else {
-    pickedBarber = BARBERS_DATA.find(b => b.id === id);
-    document.querySelectorAll('.b-card').forEach(c => c.classList.remove('sel'));
-    document.getElementById('bAny').classList.remove('sel');
-    document.getElementById('bc_' + id).classList.add('sel');
-  }
+  pickedBarber = BARBERS_DATA.find(b => b.id === id);
+  document.querySelectorAll('.b-card').forEach(c => c.classList.remove('sel'));
+  document.getElementById('bc_' + id).classList.add('sel');
   // Filter available services
   if (pickedSvc) {
     const allowed = SVC_BARBERS[pickedSvc.id];
-    if (allowed && pickedBarber.id !== 'any' && !allowed.includes(pickedBarber.id)) {
+    if (allowed && !allowed.includes(pickedBarber.id)) {
       pickedSvc = null; // reset if barber can't do that service
     }
   }
@@ -417,7 +397,7 @@ function selBarber(id) {
 // ── S2: Services ──────────────────────────────────────────────
 function renderSvcs() {
   const grid = document.getElementById('svcGrid');
-  const filteredBarber = pickedBarber && pickedBarber.id !== 'any' ? pickedBarber.id : null;
+  const filteredBarber = pickedBarber ? pickedBarber.id : null;
   const visible = filteredBarber
     ? SVCS_DATA.filter(s => { const a = SVC_BARBERS[s.id]; return !a || a.includes(filteredBarber); })
     : SVCS_DATA;
@@ -514,30 +494,10 @@ async function loadSlots() {
     `${['lunes','martes','miércoles','jueves','viernes','sábado'][((dateObj.getDay()+6)%7)]} ${dy} de ${MESES[mo-1]}`;
 
   try {
-    if (pickedBarber.id === 'any') {
-      // Fetch all barbers and merge
-      const results = await Promise.all(
-        BARBERS_DATA.map(b =>
-          fetch(`${API}/appointments/slots?bid=${b.bid}&date=${pickedDate}&svc_id=${pickedSvc.id}`)
-            .then(r => r.json()).then(j => ({ bid: b.bid, b, slots: j.slots || [] }))
-        )
-      );
-      // Build merged map: time → which barbers are available
-      const map = {};
-      for (const { b, slots } of results) {
-        for (const s of slots) {
-          if (!map[s.hora]) map[s.hora] = { hora: s.hora, hora_fin: s.hora_fin, available_bids: [] };
-          if (s.disponible) map[s.hora].available_bids.push({ bid: b.bid, n: b.n, id: b.id });
-        }
-      }
-      const merged = Object.values(map).sort((a,b) => a.hora.localeCompare(b.hora));
-      renderSlots(merged.map(s => ({ hora: s.hora, hora_fin: s.hora_fin, disponible: s.available_bids.length > 0, available_bids: s.available_bids })));
-    } else {
-      const r = await fetch(`${API}/appointments/slots?bid=${pickedBarber.bid}&date=${pickedDate}&svc_id=${pickedSvc.id}`);
-      const j = await r.json();
-      if (!j.ok) throw new Error(j.error);
-      renderSlots(j.slots || []);
-    }
+    const r = await fetch(`${API}/appointments/slots?bid=${pickedBarber.bid}&date=${pickedDate}&svc_id=${pickedSvc.id}`);
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error);
+    renderSlots(j.slots || []);
   } catch (e) {
     cont.innerHTML = `<div class="slots-empty">No se pudo cargar la disponibilidad.<br>Intenta de nuevo.</div>`;
   }
@@ -560,11 +520,6 @@ function renderSlots(slots) {
 
 function pickSlot(slot, el) {
   pickedSlot = slot;
-  // If "cualquiera", assign first available barber at this slot
-  if (pickedBarber.id === 'any' && slot.available_bids?.length) {
-    const assigned = slot.available_bids[0];
-    pickedBarber = { ...pickedBarber, bid: assigned.bid, assignedName: assigned.n };
-  }
   document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('sel-s'));
   el.classList.add('sel-s');
   document.getElementById('s4Next').disabled = false;
@@ -573,9 +528,7 @@ function pickSlot(slot, el) {
 // ── S5: Form ──────────────────────────────────────────────────
 function renderFormSummary() {
   const [y,m,d] = pickedDate.split('-').map(Number);
-  const bnom = pickedBarber.id === 'any'
-    ? (pickedBarber.assignedName || 'Próximo disponible')
-    : pickedBarber.n;
+  const bnom = pickedBarber.n;
   document.getElementById('formSummary').innerHTML = `
     <div class="form-sum-row">
       <span class="form-sum-label">Servicio</span>
@@ -639,9 +592,7 @@ async function confirmarCita() {
 
 function showConfirmation(name) {
   const [y,m,d] = pickedDate.split('-').map(Number);
-  const bnom = pickedBarber.id === 'any'
-    ? (pickedBarber.assignedName || 'Próximo disponible')
-    : pickedBarber.n;
+  const bnom = pickedBarber.n;
   document.getElementById('confirmSub').textContent =
     `${name}, tu cita está reservada. Te esperamos.`;
   document.getElementById('confirmCard').innerHTML = `

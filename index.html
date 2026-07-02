@@ -1064,7 +1064,7 @@ function closeBPicker() {
 }
 
 /* ── BOOKING ── */
-const BARBER_BID = { samuel:'b3', emerson:'b2', didian:'b1' };
+const BARBER_BID = { samuel:'b3', emerson:'b2', didian:'b1', steven:'b5' };
 function agendar(id) {
   const s = SVCS.find(x => x.id === id); if (!s) return;
   const needsPicker = !selBarber || (selBarber.id === 'any' && s.barbers && s.barbers.length > 0);
