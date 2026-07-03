@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SF Barberos">
+<meta name="theme-color" content="#1a1916">
+<title>SF Barberos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#1a1916;--surface:#242220;--surface2:#2e2c29;
+  --border:rgba(255,255,255,.1);
+  --gold:#C9A84C;--gold-dim:rgba(201,168,76,.12);
+  --text:#f5f4f0;--text2:rgba(245,244,240,.65);--text3:rgba(245,244,240,.38);
+  --danger:#e05555;--success:#4db87a;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --r:10px;--rl:14px;
+}
+
+html,body{
+  height:100%;background:var(--bg);color:var(--text);
+  font-family:var(--sans);font-size:15px;
+  -webkit-font-smoothing:antialiased;overscroll-behavior:none;
+}
+
+#app{
+  min-height:100dvh;max-width:430px;margin:0 auto;
+  display:flex;flex-direction:column;
+  padding:
+    env(safe-area-inset-top,0px)
+    env(safe-area-inset-right,0px)
+    env(safe-area-inset-bottom,0px)
+    env(safe-area-inset-left,0px);
+}
+
+/* ── SCREENS ─────────────────────────────────────────────── */
+.screen{display:none;flex-direction:column;flex:1}
+.screen.active{display:flex}
+
+/* ── LOGIN ───────────────────────────────────────────────── */
+#screenLogin{
+  align-items:center;padding:44px 24px 28px;gap:0;overflow-y:auto;
+}
+
+.logo-mark{
+  width:60px;height:60px;border-radius:50%;
+  border:1.5px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:24px;font-weight:600;
+  color:var(--gold);margin-bottom:12px;letter-spacing:.04em;
+  flex-shrink:0;
+}
+
+.login-title{
+  font-family:var(--serif);font-size:24px;font-weight:600;
+  text-align:center;line-height:1.2;margin-bottom:3px;
+}
+.login-sub{
+  font-size:11px;color:var(--text3);text-align:center;
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:28px;
+}
+
+.sel-label{
+  font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text3);margin-bottom:9px;
+  align-self:flex-start;width:100%;
+}
+
+.barber-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);
+  gap:8px;width:100%;margin-bottom:24px;
+}
+
+.barber-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r);padding:13px 10px;
+  cursor:pointer;text-align:center;
+  transition:border-color .15s,background .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.barber-card.selected{border-color:var(--gold);background:var(--gold-dim)}
+
+.bc-initial{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;margin:0 auto 7px;
+}
+.bc-name{font-size:13px;font-weight:500;color:var(--text)}
+
+/* PIN dots */
+.pin-dots{display:flex;gap:13px;justify-content:center;margin-bottom:18px}
+.pin-dot{
+  width:13px;height:13px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.28);background:transparent;
+  transition:background .12s,border-color .12s;
+}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold)}
+
+/* PIN pad */
+.pin-pad{
+  display:grid;grid-template-columns:repeat(3,68px);
+  gap:9px;justify-content:center;width:100%;
+}
+.pin-key{
+  height:58px;border-radius:12px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);
+  font-family:var(--sans);font-size:20px;font-weight:500;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .1s,transform .08s;
+  -webkit-tap-highlight-color:transparent;user-select:none;
+}
+.pin-key:active{background:var(--surface2);transform:scale(.94)}
+.pin-key.ghost{background:transparent;border-color:transparent;cursor:default;pointer-events:none}
+.pin-key.del{background:transparent;border-color:transparent;font-size:17px}
+
+.pin-err{
+  font-size:13px;color:var(--danger);text-align:center;
+  min-height:20px;margin-top:12px;
+}
+
+/* ── SETUP PIN ───────────────────────────────────────────── */
+#screenSetupPin{align-items:center;padding:44px 24px 28px}
+.setup-title{font-family:var(--serif);font-size:26px;font-weight:600;text-align:center;margin-bottom:5px}
+.setup-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:28px;line-height:1.5}
+.setup-step{
+  font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.09em;color:var(--gold);margin-bottom:14px;
+}
+
+/* ── DASHBOARD ───────────────────────────────────────────── */
+#screenDash{overflow-y:auto}
+
+.dash-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  position:sticky;top:0;background:var(--bg);z-index:10;
+}
+.dash-logo{display:flex;align-items:center;gap:9px}
+.dash-mark{
+  width:32px;height:32px;border-radius:50%;
+  border:1.5px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:12px;font-weight:600;color:var(--gold);
+}
+.dash-bname{font-size:15px;font-weight:600}
+.dash-logout{
+  padding:6px 12px;border-radius:20px;
+  border:1px solid rgba(255,255,255,.15);
+  background:transparent;color:var(--text2);
+  font-family:var(--sans);font-size:12px;cursor:pointer;
+}
+
+.offline-banner{
+  display:none;background:rgba(224,85,85,.12);
+  border-bottom:1px solid rgba(224,85,85,.25);
+  padding:9px 20px;font-size:13px;color:#e07575;text-align:center;
+}
+.offline-banner.on{display:block}
+
+/* Stats */
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 20px}
+.stat-card{background:var(--surface);border-radius:var(--r);padding:13px 10px;text-align:center}
+.stat-val{
+  font-family:var(--serif);font-size:22px;font-weight:600;
+  color:var(--gold);line-height:1;margin-bottom:4px;
+}
+.stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+
+/* Sections */
+.dash-sec{padding:0 20px;margin-bottom:6px}
+.sec-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 0 7px;border-bottom:1px solid var(--border);margin-bottom:7px;
+}
+.sec-ttl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+.sec-badge{font-size:11px;color:var(--text3)}
+
+.empty-msg{padding:16px 0;text-align:center;font-size:13px;color:var(--text3);font-style:italic}
+
+/* Queue items */
+.q-item{
+  display:flex;align-items:center;gap:11px;
+  padding:11px 0;border-bottom:1px solid rgba(255,255,255,.05);
+}
+.q-pos{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+  background:var(--gold-dim);border:1px solid rgba(201,168,76,.28);color:var(--gold);
+}
+.q-pos.active{
+  background:rgba(77,184,122,.1);border-color:rgba(77,184,122,.35);
+  color:var(--success);font-size:14px;
+}
+.q-info{flex:1;min-width:0}
+.q-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q-svc{font-size:11px;color:var(--text3);margin-top:1px}
+.q-badge{
+  font-size:10px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.06em;padding:3px 7px;border-radius:20px;white-space:nowrap;
+}
+.badge-wait    {background:rgba(201,168,76,.1);color:var(--gold)}
+.badge-imminent{background:rgba(255,160,50,.1);color:#ffa032}
+.badge-active  {background:rgba(77,184,122,.1);color:var(--success)}
+
+/* Service history */
+.svc-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);
+}
+.svc-lft{flex:1;min-width:0}
+.svc-nm{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svc-tm{font-size:11px;color:var(--text3);margin-top:1px}
+.svc-rt{text-align:right}
+.svc-bb{font-size:14px;font-weight:600;color:var(--gold)}
+.svc-pg{font-size:10px;color:var(--text3);margin-top:1px;text-transform:capitalize}
+
+.refresh-row{
+  display:flex;align-items:center;justify-content:center;
+  padding:10px 20px 20px;gap:6px;font-size:11px;color:var(--text3);
+}
+.refresh-dot{width:6px;height:6px;border-radius:50%;background:var(--success)}
+
+/* FAB */
+.fab{
+  position:fixed;
+  bottom:calc(22px + env(safe-area-inset-bottom,0px));
+  right:calc(max(calc(50vw - 215px),0px) + 18px);
+  width:54px;height:54px;border-radius:50%;
+  background:var(--gold);color:#1a1916;border:none;
+  font-size:28px;font-weight:300;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 18px rgba(201,168,76,.35);z-index:50;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .12s,opacity .15s;
+}
+.fab:active{transform:scale(.91)}
+.fab.hidden{display:none}
+
+/* ── REGISTER MODAL ──────────────────────────────────────── */
+.modal-ov{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.6);z-index:100;align-items:flex-end;
+}
+.modal-ov.open{display:flex}
+
+.modal-sheet{
+  background:var(--surface);border-radius:18px 18px 0 0;
+  width:100%;max-width:430px;margin:0 auto;
+  max-height:92dvh;display:flex;flex-direction:column;overflow:hidden;
+}
+.modal-handle{
+  width:38px;height:4px;border-radius:2px;
+  background:rgba(255,255,255,.18);margin:11px auto 0;flex-shrink:0;
+}
+.modal-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 20px 11px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.modal-title{font-family:var(--serif);font-size:20px;font-weight:600}
+.modal-close{
+  width:30px;height:30px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.07);color:var(--text2);
+  font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;line-height:1;
+}
+
+.modal-body{overflow-y:auto;flex:1;padding:14px 20px;-webkit-overflow-scrolling:touch}
+.modal-foot{
+  padding:12px 20px;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid var(--border);flex-shrink:0;
+}
+
+.field-grp{margin-bottom:16px}
+.field-lbl{
+  font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text3);margin-bottom:7px;
+}
+
+/* Service list */
+.svc-opts{display:flex;flex-direction:column;gap:4px;max-height:210px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.svc-opt{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 13px;border-radius:var(--r);
+  border:1.5px solid var(--border);background:var(--bg);
+  cursor:pointer;transition:border-color .1s,background .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.svc-opt.on{border-color:var(--gold);background:var(--gold-dim)}
+.svc-opt-nm{font-size:13px;color:var(--text)}
+.svc-opt-pr{font-size:12px;color:var(--text3)}
+
+/* Inputs */
+.price-inp,.tip-inp{
+  width:100%;padding:11px 13px;border-radius:var(--r);
+  border:1.5px solid var(--border);background:var(--bg);
+  color:var(--text);font-family:var(--sans);
+}
+.price-inp{font-size:18px;font-weight:600}
+.tip-inp{font-size:15px}
+.price-inp:focus,.tip-inp:focus{outline:none;border-color:rgba(255,255,255,.3)}
+
+/* Payment */
+.pago-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.pago-btn{
+  padding:10px 0;border-radius:var(--r);
+  border:1.5px solid var(--border);background:var(--bg);
+  color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:500;
+  cursor:pointer;text-align:center;
+  transition:border-color .1s,color .1s,background .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.pago-btn.on{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+
+/* Commission preview */
+.comm-prev{
+  background:rgba(201,168,76,.07);
+  border:1px solid rgba(201,168,76,.18);
+  border-radius:var(--r);padding:13px 14px;
+}
+.cp-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:5px}
+.cp-row:last-child{margin-bottom:0}
+.cp-lbl{color:var(--text2)}
+.cp-val{font-weight:600;color:var(--text)}
+.cp-val.gold{color:var(--gold);font-size:16px}
+
+/* Buttons */
+.reg-btn{
+  width:100%;padding:14px;border-radius:var(--r);border:none;
+  background:var(--gold);color:#1a1916;
+  font-family:var(--sans);font-size:15px;font-weight:700;
+  cursor:pointer;transition:opacity .15s;
+}
+.reg-btn:disabled{opacity:.38;cursor:not-allowed}
+
+.err-text{font-size:12px;color:var(--danger);min-height:18px;text-align:center;margin-top:7px}
+
+/* Toast */
+.toast{
+  position:fixed;
+  bottom:calc(88px + env(safe-area-inset-bottom,0px));
+  left:50%;transform:translateX(-50%) translateY(16px);
+  background:var(--surface2);color:var(--text);
+  padding:9px 18px;border-radius:20px;font-size:13px;font-weight:500;
+  border:1px solid var(--border);
+  opacity:0;transition:opacity .2s,transform .2s;
+  pointer-events:none;white-space:nowrap;z-index:200;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Spinner */
+.spin{
+  width:18px;height:18px;border:2px solid rgba(255,255,255,.15);
+  border-top-color:var(--gold);border-radius:50%;
+  animation:spin .65s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ───────── LOGIN ─────────────────────────────────────── -->
+<div id="screenLogin" class="screen active">
+  <div class="logo-mark">SF</div>
+  <div class="login-title">Salon Men Saúl Fino</div>
+  <div class="login-sub">Portal Barberos</div>
+
+  <div class="sel-label">Selecciona tu barbero</div>
+  <div class="barber-grid" id="barberGrid">
+    <div style="grid-column:1/-1;display:flex;justify-content:center;padding:18px 0">
+      <div class="spin"></div>
+    </div>
+  </div>
+
+  <div class="pin-dots" id="pinDots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+
+  <div class="pin-pad">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key ghost"></button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key del" onclick="pinDel()">⌫</button>
+  </div>
+  <div class="pin-err" id="loginErr"></div>
+</div>
+
+<!-- ───────── SETUP PIN ──────────────────────────────────── -->
+<div id="screenSetupPin" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:44px 24px 28px">
+    <div class="logo-mark">SF</div>
+    <div class="setup-title">Crear PIN</div>
+    <div class="setup-sub" id="setupSub">Configura tu PIN de acceso de 4 dígitos</div>
+    <div class="setup-step" id="setupStepLbl">Ingresa tu nuevo PIN</div>
+
+    <div class="pin-dots" id="setupDots">
+      <div class="pin-dot" id="spd0"></div>
+      <div class="pin-dot" id="spd1"></div>
+      <div class="pin-dot" id="spd2"></div>
+      <div class="pin-dot" id="spd3"></div>
+    </div>
+
+    <div class="pin-pad">
+      <button class="pin-key" onclick="setupKey('1')">1</button>
+      <button class="pin-key" onclick="setupKey('2')">2</button>
+      <button class="pin-key" onclick="setupKey('3')">3</button>
+      <button class="pin-key" onclick="setupKey('4')">4</button>
+      <button class="pin-key" onclick="setupKey('5')">5</button>
+      <button class="pin-key" onclick="setupKey('6')">6</button>
+      <button class="pin-key" onclick="setupKey('7')">7</button>
+      <button class="pin-key" onclick="setupKey('8')">8</button>
+      <button class="pin-key" onclick="setupKey('9')">9</button>
+      <button class="pin-key ghost"></button>
+      <button class="pin-key" onclick="setupKey('0')">0</button>
+      <button class="pin-key del" onclick="setupDel()">⌫</button>
+    </div>
+    <div class="pin-err" id="setupErr"></div>
+  </div>
+</div>
+
+<!-- ───────── DASHBOARD ──────────────────────────────────── -->
+<div id="screenDash" class="screen">
+  <div class="dash-hdr">
+    <div class="dash-logo">
+      <div class="dash-mark">SF</div>
+      <div class="dash-bname" id="dashName">—</div>
+    </div>
+    <button class="dash-logout" onclick="logout()">Salir</button>
+  </div>
+
+  <div class="offline-banner" id="offlineBanner">Sin conexión · Registro deshabilitado</div>
+
+  <div class="dash-stats">
+    <div class="stat-card"><div class="stat-val" id="sSvc">—</div><div class="stat-lbl">Servicios</div></div>
+    <div class="stat-card"><div class="stat-val" id="sFact">—</div><div class="stat-lbl">Facturado</div></div>
+    <div class="stat-card"><div class="stat-val" id="sBB">—</div><div class="stat-lbl">Tu corte</div></div>
+  </div>
+
+  <div class="dash-sec">
+    <div class="sec-hdr">
+      <div class="sec-ttl">Cola · En silla</div>
+      <div class="sec-badge" id="qBadge"></div>
+    </div>
+    <div id="qList"><div class="empty-msg">Sin clientes en espera</div></div>
+  </div>
+
+  <div class="dash-sec">
+    <div class="sec-hdr">
+      <div class="sec-ttl">Servicios de hoy</div>
+      <div class="sec-badge" id="svcBadge"></div>
+    </div>
+    <div id="svcList"><div class="empty-msg">Sin registros aún</div></div>
+  </div>
+
+  <div class="refresh-row">
+    <div class="refresh-dot"></div>
+    <span id="lastRefresh">Cargando…</span>
+  </div>
+  <div style="height:76px"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab hidden" id="fab" onclick="openModal()" title="Registrar servicio">+</button>
+
+<!-- ───────── REGISTER MODAL ────────────────────────────── -->
+<div class="modal-ov" id="regModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <div class="modal-title">Registrar servicio</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="field-grp">
+        <div class="field-lbl">Servicio</div>
+        <div class="svc-opts" id="svcOpts"></div>
+      </div>
+
+      <div class="field-grp">
+        <div class="field-lbl">Precio</div>
+        <input type="number" class="price-inp" id="mPrecio" placeholder="12000" oninput="calcComm()">
+      </div>
+
+      <div class="field-grp">
+        <div class="field-lbl">Propina <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></div>
+        <input type="number" class="tip-inp" id="mPropina" placeholder="0" oninput="calcComm()">
+      </div>
+
+      <div class="field-grp">
+        <div class="field-lbl">Método de pago</div>
+        <div class="pago-btns">
+          <button class="pago-btn" data-p="efectivo"      onclick="selPago(this)">Efectivo</button>
+          <button class="pago-btn" data-p="debito"        onclick="selPago(this)">Débito</button>
+          <button class="pago-btn" data-p="transferencia" onclick="selPago(this)">Transfer.</button>
+        </div>
+      </div>
+
+      <div class="field-grp">
+        <div class="comm-prev">
+          <div class="cp-row"><span class="cp-lbl">Precio total</span><span class="cp-val" id="cpTotal">—</span></div>
+          <div class="cp-row"><span class="cp-lbl">Propina</span><span class="cp-val" id="cpPropina">$0</span></div>
+          <div class="cp-row"><span class="cp-lbl">Tu corte</span><span class="cp-val gold" id="cpBB">—</span></div>
+          <div class="cp-row"><span class="cp-lbl">Para el negocio</span><span class="cp-val" id="cpNeg">—</span></div>
+        </div>
+      </div>
+
+      <div class="err-text" id="regErr"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="reg-btn" id="regBtn" disabled onclick="submitReg()">Registrar servicio</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+</div><!-- #app -->
+<script>
+'use strict';
+
+/* ── Constants ──────────────────────────────────────────── */
+var API    = 'https://barberpilot-api-production.up.railway.app';
+var TENANT = 'saulfino';
+
+var SS = [
+  {id:'s01',nombre:'Corte',                              precio:12000},
+  {id:'s02',nombre:'Barba',                              precio:10000},
+  {id:'s03',nombre:'Corte + Barba',                      precio:20000},
+  {id:'s04',nombre:'Corte + Perfilado de barba',         precio:16000},
+  {id:'s05',nombre:'Perfilado de corte',                 precio:6000},
+  {id:'s06',nombre:'Perfilado de cejas',                 precio:4000},
+  {id:'s07',nombre:'Barba + Cejas',                      precio:13000},
+  {id:'s08',nombre:'Perfilado de barba',                 precio:6000},
+  {id:'s09',nombre:'Matizado canas cabello',             precio:8000},
+  {id:'s10',nombre:'Matizado canas barba',               precio:5000},
+  {id:'s11',nombre:'Corte Express + Perfilado de barba', precio:15000}
+];
+
+var COM = {efectivo:0.5, debito:0.43, transferencia:0.5};
+
+var BARBER_COLORS = {b1:'#c9a84c',b2:'#4db87a',b3:'#5580d4',b4:'#aaaaaa',b5:'#e05555'};
+
+/* ── State ──────────────────────────────────────────────── */
+var _token   = localStorage.getItem('sf_barber_token') || '';
+var _bid     = '';
+var _bnom    = '';
+var _selBid  = '';
+var _pinBuf  = '';
+var _setupStep = 1;
+var _setupPin1 = '';
+var _setupBuf  = '';
+var _selSid    = null;
+var _selPago   = null;
+var _dashTimer = null;
+
+/* ── Helpers ─────────────────────────────────────────────── */
+function pad(n){ return n < 10 ? '0'+n : String(n); }
+
+function fmt(n){
+  return Math.round(n).toLocaleString('es-CL');
+}
+
+function fmtK(n){
+  n = Math.round(n);
+  if(n >= 1000) return (n/1000).toFixed(n%1000===0?0:1)+'k';
+  return String(n);
+}
+
+function esc(s){
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, dur){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, dur||2500);
+}
+
+function showScreen(id){
+  var ss = document.querySelectorAll('.screen');
+  for(var i=0;i<ss.length;i++) ss[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  document.getElementById('fab').classList.toggle('hidden', id !== 'screenDash');
+}
+
+function decodeJwt(t){
+  try{
+    var b64 = t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(atob(b64));
+  }catch(e){ return null; }
+}
+
+function authHdr(){
+  return {'Authorization':'Bearer '+_token,'Content-Type':'application/json'};
+}
+
+function handle401(){
+  localStorage.removeItem('sf_barber_token');
+  _token = _bid = _bnom = '';
+  clearInterval(_dashTimer);
+  showScreen('screenLogin');
+  toast('Sesión expirada. Ingresa de nuevo.');
+}
+
+/* ── Offline ─────────────────────────────────────────────── */
+function syncOffline(){
+  var off = !navigator.onLine;
+  document.getElementById('offlineBanner').classList.toggle('on', off);
+  var dashActive = document.getElementById('screenDash').classList.contains('active');
+  document.getElementById('fab').classList.toggle('hidden', !dashActive || off);
+}
+window.addEventListener('online',  syncOffline);
+window.addEventListener('offline', syncOffline);
+
+/* ── Barber selector ─────────────────────────────────────── */
+function loadBarbers(){
+  fetch(API+'/barberos')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      // /barberos returns a raw array
+      var arr = Array.isArray(d) ? d : (Array.isArray(d.barberos) ? d.barberos : []);
+      if(!arr.length) throw new Error('empty');
+      renderBarbers(arr);
+    })
+    .catch(function(){
+      renderBarbers([
+        {bid:'b1',nombre:'Didian', iniciales:'DI',color:'#c9a84c'},
+        {bid:'b2',nombre:'Emerson',iniciales:'EM',color:'#4db87a'},
+        {bid:'b3',nombre:'Samuel', iniciales:'SA',color:'#5580d4'},
+        {bid:'b5',nombre:'Steven', iniciales:'ST',color:'#e05555'}
+      ]);
+    });
+}
+
+function renderBarbers(arr){
+  var h='';
+  for(var i=0;i<arr.length;i++){
+    var b=arr[i];
+    var col = b.color || BARBER_COLORS[b.bid] || '#888';
+    var ini = b.iniciales || b.nombre.slice(0,2).toUpperCase();
+    h+='<div class="barber-card" data-bid="'+esc(b.bid)+'" data-nombre="'+esc(b.nombre)+'" onclick="selBarber(this)">'
+      +'<div class="bc-initial" style="background:'+col+'22;color:'+col+'">'+esc(ini)+'</div>'
+      +'<div class="bc-name">'+esc(b.nombre)+'</div>'
+      +'</div>';
+  }
+  document.getElementById('barberGrid').innerHTML = h;
+}
+
+function selBarber(el){
+  var cards = document.querySelectorAll('.barber-card');
+  for(var i=0;i<cards.length;i++) cards[i].classList.remove('selected');
+  el.classList.add('selected');
+  _selBid  = el.dataset.bid;
+  _selNom  = el.dataset.nombre;
+  resetLoginPin();
+  document.getElementById('loginErr').textContent = '';
+}
+
+/* ── PIN input — login ───────────────────────────────────── */
+function syncDots(buf, prefix){
+  for(var i=0;i<4;i++){
+    document.getElementById(prefix+i).classList.toggle('filled', i < buf.length);
+  }
+}
+
+function pinKey(k){
+  if(_pinBuf.length >= 4) return;
+  _pinBuf += k;
+  syncDots(_pinBuf,'pd');
+  if(_pinBuf.length === 4) doLogin();
+}
+
+function pinDel(){
+  if(_pinBuf.length > 0){ _pinBuf = _pinBuf.slice(0,-1); syncDots(_pinBuf,'pd'); }
+}
+
+function resetLoginPin(){
+  _pinBuf = '';
+  syncDots('','pd');
+}
+
+function doLogin(){
+  var errEl = document.getElementById('loginErr');
+  if(!_selBid){ errEl.textContent='Selecciona tu barbero primero'; resetLoginPin(); return; }
+  errEl.textContent = '';
+  var pin = _pinBuf;
+  resetLoginPin();
+
+  fetch(API+'/api/v2/auth/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:TENANT, bid:_selBid, pin:pin})
+  })
+  .then(function(r){ return r.json().then(function(j){ return {s:r.status,j:j}; }); })
+  .then(function(res){
+    if(res.s===200 && res.j.ok){
+      _token = res.j.token;
+      _bid   = res.j.staff.bid;
+      _bnom  = res.j.staff.name;
+      localStorage.setItem('sf_barber_token', _token);
+      if(!res.j.pin_set){
+        document.getElementById('setupSub').textContent = 'Bienvenido, '+_bnom+' · Crea tu PIN de acceso';
+        startSetup();
+      } else {
+        enterDash();
+      }
+    } else if(res.s===429){
+      errEl.textContent = res.j.message || 'Demasiados intentos. Espera 1 minuto.';
+    } else {
+      errEl.textContent = 'PIN incorrecto. Intenta de nuevo.';
+    }
+  })
+  .catch(function(){ errEl.textContent = 'Error de conexión.'; });
+}
+
+/* ── Setup PIN ───────────────────────────────────────────── */
+function startSetup(){
+  _setupStep = 1; _setupPin1 = ''; _setupBuf = '';
+  syncDots('','spd');
+  document.getElementById('setupStepLbl').textContent = 'Ingresa tu nuevo PIN';
+  document.getElementById('setupErr').textContent = '';
+  showScreen('screenSetupPin');
+}
+
+function setupKey(k){
+  if(_setupBuf.length >= 4) return;
+  _setupBuf += k;
+  syncDots(_setupBuf,'spd');
+  if(_setupBuf.length === 4){
+    if(_setupStep === 1){
+      _setupPin1 = _setupBuf; _setupBuf = '';
+      syncDots('','spd');
+      _setupStep = 2;
+      document.getElementById('setupStepLbl').textContent = 'Confirma tu PIN';
+    } else {
+      if(_setupBuf !== _setupPin1){
+        document.getElementById('setupErr').textContent = 'Los PINs no coinciden. Intenta de nuevo.';
+        _setupStep = 1; _setupPin1 = ''; _setupBuf = '';
+        syncDots('','spd');
+        document.getElementById('setupStepLbl').textContent = 'Ingresa tu nuevo PIN';
+      } else {
+        doSetupPin(_setupBuf);
+      }
+    }
+  }
+}
+
+function setupDel(){
+  if(_setupBuf.length > 0){ _setupBuf = _setupBuf.slice(0,-1); syncDots(_setupBuf,'spd'); }
+}
+
+function doSetupPin(newPin){
+  document.getElementById('setupErr').textContent = '';
+  fetch(API+'/api/v2/auth/set-pin',{
+    method:'POST',
+    headers:authHdr(),
+    body:JSON.stringify({new_pin:newPin, confirm_pin:newPin})
+  })
+  .then(function(r){
+    if(r.status===401){ handle401(); return null; }
+    return r.json();
+  })
+  .then(function(d){
+    if(!d) return;
+    if(d.ok){ toast('PIN creado ✓'); enterDash(); }
+    else{
+      document.getElementById('setupErr').textContent = d.error || 'Error al guardar PIN';
+      startSetup();
+    }
+  })
+  .catch(function(){
+    document.getElementById('setupErr').textContent = 'Error de conexión.';
+    _setupBuf = ''; syncDots('','spd');
+  });
+}
+
+/* ── Dashboard ───────────────────────────────────────────── */
+function enterDash(){
+  document.getElementById('dashName').textContent = _bnom;
+  showScreen('screenDash');
+  syncOffline();
+  buildSvcOpts();
+  loadDash();
+  clearInterval(_dashTimer);
+  _dashTimer = setInterval(loadDash, 30000);
+}
+
+function loadDash(){
+  var p1 = fetch(API+'/barbero/'+_bid+'/hoy')
+    .then(function(r){
+      if(r.status===401){ handle401(); throw new Error('401'); }
+      return r.json();
+    });
+
+  var p2 = fetch(API+'/queue/control',{headers:authHdr()})
+    .then(function(r){
+      if(r.status===401){ handle401(); throw new Error('401'); }
+      return r.json();
+    });
+
+  Promise.all([p1,p2])
+    .then(function(res){
+      renderStats(res[0]);
+      renderSvcList(res[0]);
+      renderQueue(res[1]);
+      var n = new Date();
+      document.getElementById('lastRefresh').textContent =
+        'Actualizado '+pad(n.getHours())+':'+pad(n.getMinutes());
+    })
+    .catch(function(e){
+      if(e.message!=='401')
+        document.getElementById('lastRefresh').textContent = 'Error al actualizar';
+    });
+}
+
+function renderStats(d){
+  if(!d||!d.ok) return;
+  document.getElementById('sSvc').textContent  = d.servicios || 0;
+  document.getElementById('sFact').textContent = '$'+fmtK(d.facturado || 0);
+  document.getElementById('sBB').textContent   = '$'+fmtK(d.a_cobrar  || 0);
+}
+
+function renderSvcList(d){
+  if(!d||!d.ok) return;
+  var regs = d.registros || [];
+  document.getElementById('svcBadge').textContent = regs.length || '';
+  var el = document.getElementById('svcList');
+  if(!regs.length){ el.innerHTML='<div class="empty-msg">Sin registros aún</div>'; return; }
+  var h = '';
+  for(var i=0;i<Math.min(regs.length,8);i++){
+    var r = regs[i];
+    var bb = (r.bb||0)+(r.propina||0);
+    h += '<div class="svc-row">'
+      +'<div class="svc-lft">'
+      +'<div class="svc-nm">'+esc(r.snom||'Servicio')+'</div>'
+      +'<div class="svc-tm">'+(r.hora?r.hora.slice(0,5):'--')+'</div>'
+      +'</div>'
+      +'<div class="svc-rt">'
+      +'<div class="svc-bb">$'+fmt(bb)+'</div>'
+      +'<div class="svc-pg">'+(r.pago||'')+'</div>'
+      +'</div>'
+      +'</div>';
+  }
+  el.innerHTML = h;
+}
+
+function renderQueue(d){
+  if(!d||!d.ok) return;
+  var el    = document.getElementById('qList');
+  var bdata = (d.barberos||{})[_bid];
+  if(!bdata){
+    document.getElementById('qBadge').textContent = '';
+    el.innerHTML = '<div class="empty-msg">Sin clientes en espera</div>';
+    return;
+  }
+
+  var entries = [];
+  if(bdata.enServicio) entries.push({e:bdata.enServicio, active:true});
+  var waiting = bdata.enEspera || [];
+  for(var i=0;i<waiting.length;i++) entries.push({e:waiting[i], active:false});
+
+  document.getElementById('qBadge').textContent = entries.length || '';
+
+  if(!entries.length){
+    el.innerHTML = '<div class="empty-msg">Sin clientes en espera</div>';
+    return;
+  }
+
+  var h = '';
+  var pos = 1;
+  for(var i=0;i<entries.length;i++){
+    var item   = entries[i].e;
+    var active = entries[i].active;
+    var st     = item.status || 'WAITING';
+    var badgeClass = active ? 'badge-active' : (st==='IMMINENT' ? 'badge-imminent' : 'badge-wait');
+    var badgeTxt   = active ? 'En silla' : (st==='IMMINENT' ? 'Próximo' : 'Espera');
+    h += '<div class="q-item">'
+      +'<div class="q-pos'+(active?' active':'')+'">'+( active?'✂':pos )+'</div>'
+      +'<div class="q-info">'
+      +'<div class="q-name">'+esc(item.client_name||'Cliente')+'</div>'
+      +'<div class="q-svc">'+esc(item.service||'')+'</div>'
+      +'</div>'
+      +'<span class="q-badge '+badgeClass+'">'+badgeTxt+'</span>'
+      +'</div>';
+    if(!active) pos++;
+  }
+  el.innerHTML = h;
+}
+
+function logout(){
+  clearInterval(_dashTimer);
+  localStorage.removeItem('sf_barber_token');
+  _token=_bid=_bnom=_selBid='';
+  resetLoginPin();
+  document.getElementById('loginErr').textContent = '';
+  showScreen('screenLogin');
+}
+
+/* ── Register modal ──────────────────────────────────────── */
+function buildSvcOpts(){
+  var h='';
+  for(var i=0;i<SS.length;i++){
+    var s=SS[i];
+    h+='<div class="svc-opt" data-sid="'+s.id+'" data-precio="'+s.precio+'" data-nombre="'+esc(s.nombre)+'" onclick="selSvc(this)">'
+      +'<span class="svc-opt-nm">'+esc(s.nombre)+'</span>'
+      +'<span class="svc-opt-pr">$'+fmt(s.precio)+'</span>'
+      +'</div>';
+  }
+  document.getElementById('svcOpts').innerHTML = h;
+}
+
+function selSvc(el){
+  var opts = document.querySelectorAll('.svc-opt');
+  for(var i=0;i<opts.length;i++) opts[i].classList.remove('on');
+  el.classList.add('on');
+  _selSid = el.dataset.sid;
+  document.getElementById('mPrecio').value = el.dataset.precio;
+  calcComm();
+  checkRegBtn();
+}
+
+function selPago(el){
+  var btns = document.querySelectorAll('.pago-btn');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('on');
+  el.classList.add('on');
+  _selPago = el.dataset.p;
+  calcComm();
+  checkRegBtn();
+}
+
+function calcComm(){
+  var precio  = parseInt(document.getElementById('mPrecio').value)  || 0;
+  var propina = parseInt(document.getElementById('mPropina').value) || 0;
+  var com     = COM[_selPago] || 0.5;
+  var bb      = Math.round(precio * com);
+  var neg     = precio - bb;
+  document.getElementById('cpTotal').textContent   = precio  ? '$'+fmt(precio)  : '—';
+  document.getElementById('cpPropina').textContent = '$'+fmt(propina);
+  document.getElementById('cpBB').textContent      = _selPago ? '$'+fmt(bb)+(propina?'+$'+fmt(propina):'') : '—';
+  document.getElementById('cpNeg').textContent     = _selPago ? '$'+fmt(neg) : '—';
+  checkRegBtn();
+}
+
+function checkRegBtn(){
+  var precio = parseInt(document.getElementById('mPrecio').value) || 0;
+  document.getElementById('regBtn').disabled = !(_selSid && _selPago && precio > 0);
+}
+
+function openModal(){
+  if(!navigator.onLine){ toast('Sin conexión — registro deshabilitado'); return; }
+  // Reset
+  _selSid = null; _selPago = null;
+  document.querySelectorAll('.svc-opt').forEach(function(el){ el.classList.remove('on'); });
+  document.querySelectorAll('.pago-btn').forEach(function(el){ el.classList.remove('on'); });
+  document.getElementById('mPrecio').value  = '';
+  document.getElementById('mPropina').value = '';
+  document.getElementById('regErr').textContent = '';
+  document.getElementById('regBtn').disabled = true;
+  document.getElementById('regBtn').textContent = 'Registrar servicio';
+  ['cpTotal','cpPropina','cpBB','cpNeg'].forEach(function(id){
+    document.getElementById(id).textContent = id==='cpPropina'?'$0':'—';
+  });
+  document.getElementById('regModal').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('regModal').classList.remove('open');
+}
+
+function submitReg(){
+  if(!_selSid || !_selPago) return;
+  var svc = null;
+  for(var i=0;i<SS.length;i++){ if(SS[i].id===_selSid){ svc=SS[i]; break; } }
+  if(!svc) return;
+
+  var precio  = parseInt(document.getElementById('mPrecio').value)  || svc.precio;
+  var propina = parseInt(document.getElementById('mPropina').value) || 0;
+  var com     = COM[_selPago] || 0.5;
+  var bb      = Math.round(precio * com);
+  var neg     = precio - bb;
+  var now     = new Date();
+  var iKey    = 'bf_'+now.getTime()+'_'+Math.random().toString(36).slice(2,6);
+
+  var payload = {
+    id:              'TK'+_bid+'_'+now.getTime()+'_'+Math.random().toString(36).slice(2,6),
+    bid:             _bid,
+    bnom:            _bnom,
+    sid:             svc.id,
+    snom:            svc.nombre,
+    precio:          precio,
+    pago:            _selPago,
+    com:             com,
+    bb:              bb,
+    neg:             neg,
+    propina:         propina,
+    fecha:           now.toLocaleDateString('es-CL'),
+    hora:            pad(now.getHours())+':'+pad(now.getMinutes()),
+    idempotency_key: iKey
+  };
+
+  var btn   = document.getElementById('regBtn');
+  var errEl = document.getElementById('regErr');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+  errEl.textContent = '';
+
+  fetch(API+'/registros',{
+    method:'POST',
+    headers:authHdr(),
+    body:JSON.stringify(payload)
+  })
+  .then(function(r){
+    if(r.status===401){ handle401(); return null; }
+    return r.json().then(function(j){ return {s:r.status,j:j}; });
+  })
+  .then(function(res){
+    btn.textContent = 'Registrar servicio';
+    if(!res) return;
+    if(res.j.ok){
+      closeModal();
+      toast('Servicio registrado ✓');
+      loadDash();
+    } else {
+      btn.disabled = false;
+      errEl.textContent = res.j.error || 'Error al registrar';
+    }
+  })
+  .catch(function(){
+    btn.disabled = false;
+    btn.textContent = 'Registrar servicio';
+    errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+  });
+}
+
+/* ── Init ────────────────────────────────────────────────── */
+(function init(){
+  loadBarbers();
+  syncOffline();
+
+  if(!_token) return;
+
+  var payload = decodeJwt(_token);
+  if(!payload || payload.exp * 1000 <= Date.now()){
+    localStorage.removeItem('sf_barber_token');
+    _token = '';
+    return;
+  }
+
+  _bid  = payload.bid  || '';
+  _bnom = payload.name || payload.bnom || '';
+
+  // Verify token server-side and get fresh profile
+  fetch(API+'/api/v2/auth/me',{headers:authHdr()})
+    .then(function(r){
+      if(r.status===401){ handle401(); return null; }
+      return r.json();
+    })
+    .then(function(d){
+      if(!d) return;
+      if(d.ok){
+        _bid  = d.bid;
+        _bnom = d.bnom;
+        if(!d.pin_set){
+          document.getElementById('setupSub').textContent = 'Bienvenido, '+_bnom+' · Crea tu PIN de acceso';
+          startSetup();
+        } else {
+          enterDash();
+        }
+      } else {
+        handle401();
+      }
+    })
+    .catch(function(){
+      // Network error on startup — use cached bid/bnom and proceed
+      if(_bid){ enterDash(); }
+    });
+})();
+</script>
+</body>
+</html>
