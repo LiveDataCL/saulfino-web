@@ -267,11 +267,12 @@ input{font-family:'Montserrat',sans-serif}
 const API = 'https://barberpilot-api-production.up.railway.app';
 
 // ── Data ──────────────────────────────────────────────────────
-const BARBERS_DATA = [
-  { id: 'samuel',  bid: 'b3', n: 'SAMUEL',     spec: 'Cortes · Barba', ini: 'S' },
-  { id: 'emerson', bid: 'b2', n: 'EMERSON',    spec: 'Diseños increíbles', ini: 'E' },
-  { id: 'didian',  bid: 'b1', n: 'DIDIAN',     spec: 'Fades · Tapers', ini: 'D' },
-  { id: 'steven',  bid: 'b5', n: 'STEVEN',     spec: 'Cortes · Barba', ini: 'ST' },
+// Hardcoded fallback — used immediately on load and if API is unreachable
+let BARBERS_DATA = [
+  { id: 'samuel',  bid: 'b3', n: 'SAMUEL',  spec: 'Cortes · Barba',    ini: 'S'  },
+  { id: 'emerson', bid: 'b2', n: 'EMERSON', spec: 'Diseños increíbles', ini: 'E'  },
+  { id: 'didian',  bid: 'b1', n: 'DIDIAN',  spec: 'Fades · Tapers',    ini: 'D'  },
+  { id: 'steven',  bid: 'b5', n: 'STEVEN',  spec: 'Cortes · Barba',    ini: 'ST' },
 ];
 
 const SVCS_DATA = [
@@ -295,6 +296,18 @@ const SVC_BARBERS = {
   mat_barba:   ['didian','emerson'],
   disenos:     ['didian','emerson'],
 };
+
+// Fetch active barbers from API — updates BARBERS_DATA and re-renders grid if user is still on step 1
+fetch(API + '/barberos')
+  .then(function(r){ return r.json(); })
+  .then(function(list){
+    if (!Array.isArray(list) || !list.length) return;
+    BARBERS_DATA = list.map(function(b){
+      return { id: b.queue_id, bid: b.bid, n: b.nombre.toUpperCase(),
+               spec: b.spec || 'Cortes · Barba', ini: b.iniciales };
+    });
+    if (step === 1) renderBarbers();
+  }).catch(function(){});
 
 // ── State ─────────────────────────────────────────────────────
 let step = 1;
