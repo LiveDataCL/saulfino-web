@@ -594,17 +594,18 @@ let BARBEROS = [  {id:'samuel',  name:'Samuel',  spec:'Cortes · Barba', ini:'S'
 // populated at runtime from GET /config/negocio/publico; see loadServicios().
 const SERVICES_FALLBACK = [
   // ── CLÁSICOS ──────────────────────────
-  {id:'corte',       name:'Corte Clásico',               price:12000, time:'30–40 min', icon:'✂'},
+  {id:'corte',       name:'Corte Clásico',               price:13000, time:'30–40 min', icon:'✂'},
   {id:'barba',       name:'Barba',                       price:10000, time:'25–35 min', icon:'🪒'},
   {id:'perf_corte',  name:'Perfilado de Corte',          price:6000,  time:'15–20 min', icon:'✂'},
   {id:'perf_barba',  name:'Perfilado de Barba',          price:6000,  time:'15–20 min', icon:'🪒'},
   {id:'perf_cejas',  name:'Perfilado de Cejas',          price:4000,  time:'10–15 min', icon:'✨'},
   // ── COMBOS ────────────────────────────
-  {id:'corte_barba', name:'Corte + Barba',               price:20000, time:'50–60 min', icon:'💈'},
+  {id:'corte_barba', name:'Corte + Barba',               price:22000, time:'50–60 min', icon:'💈'},
   {id:'corte_perfb', name:'Corte + Perfilado de Barba',  price:16000, time:'40–50 min', icon:'💈'},
   {id:'corte_cejas', name:'Corte + Cejas',               price:15000, time:'40–50 min', icon:'💫'},
   {id:'barba_cejas', name:'Barba + Cejas',               price:13000, time:'35–40 min', icon:'🪒'},
-  {id:'express',     name:'Corte Express + Perf. Barba', price:15000, time:'30–40 min', icon:'⚡'},
+  // 'express' (Corte Express + Perf. Barba, s11) retired 2026-07-16 — removed from
+  // the offline fallback too, so a network failure never offers a retired service.
   // ── TRATAMIENTOS ──────────────────────
   {id:'mat_cabello', name:'Matizado Canas Cabello',      price:8000,  time:'20–30 min', icon:'🎨'},
   {id:'mat_barba',   name:'Matizado Canas Barba',        price:5000,  time:'15–20 min', icon:'🎨'},
