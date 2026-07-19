@@ -562,7 +562,7 @@ var SS = [
 
 var COM = {efectivo:0.5, debito:0.43, transferencia:0.5};
 
-var BARBER_COLORS = {b1:'#c9a84c',b2:'#4db87a',b3:'#5580d4',b4:'#aaaaaa',b5:'#e05555'};
+var BARBER_COLORS = {b1:'#c9a84c',b2:'#4db87a',b4:'#aaaaaa',b5:'#e05555',b6:'#9b5de5'};
 
 /* ── State ──────────────────────────────────────────────── */
 var _token   = localStorage.getItem('sf_barber_token') || '';
@@ -653,8 +653,8 @@ function loadBarbers(){
       renderBarbers([
         {bid:'b1',nombre:'Didian', iniciales:'DI',color:'#c9a84c'},
         {bid:'b2',nombre:'Emerson',iniciales:'EM',color:'#4db87a'},
-        {bid:'b3',nombre:'Samuel', iniciales:'SA',color:'#5580d4'},
-        {bid:'b5',nombre:'Steven', iniciales:'ST',color:'#e05555'}
+        {bid:'b5',nombre:'Steven', iniciales:'ST',color:'#e05555'},
+        {bid:'b6',nombre:'Winder', iniciales:'WI',color:'#9b5de5'}
       ]);
     });
 }
