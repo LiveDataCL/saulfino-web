@@ -865,13 +865,20 @@ let cart = [], selBarber = null;
 const fmt = n => '$' + n.toLocaleString('es-CL');
 
 /* ── RENDER BARBERS ── */
-document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
-  <div class="bc" data-id="${b.id}" onclick="pickBarber('${b.id}')">
-    <div class="bc-av">${b.photo?'<img src="'+b.photo+'" alt="'+b.n+'">':b.ini}</div>
-    <div class="bc-name">${b.n}</div>
-    <div class="bc-spec">${b.spec}</div>
-    <button class="bc-btn">AGENDA CON ${b.n}</button>
-  </div>`).join('');
+function renderBarberos() {
+  document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
+    <div class="bc" data-id="${b.id}" onclick="pickBarber('${b.id}')">
+      <div class="bc-av">${b.photo?'<img src="'+b.photo+'" alt="'+b.n+'">':b.ini}</div>
+      <div class="bc-name">${b.n}</div>
+      <div class="bc-spec">${b.spec}</div>
+      <button class="bc-btn">AGENDA CON ${b.n}</button>
+    </div>`).join('');
+  var _de = document.getElementById('barberDots');
+  if (_de) _de.innerHTML = BARBERS.map(function(_,i){
+    return '<div class="barbers-dot'+(i===0?' active':'')+ '" data-i="'+i+'"></div>';
+  }).join('');
+}
+renderBarberos();
 
 
 
@@ -881,11 +888,6 @@ document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
   const dotsEl   = document.getElementById('barberDots');
   const hintEl   = document.getElementById('swipeHint');
   const cardW    = 185 + 14;
-
-  dotsEl.innerHTML = BARBERS.map((_,i) =>
-    '<div class="barbers-dot' + (i===0?' active':'') + '" data-i="' + i + '"></div>'
-  ).join('');
-  const dots = dotsEl.querySelectorAll('.barbers-dot');
 
   function updateBarbFocus() {
     if (window._barbSel) return;
@@ -908,8 +910,9 @@ document.getElementById('barbScroll').innerHTML = BARBERS.map(b => `
       hintGone = true;
       hintEl.classList.add('gone');
     }
-    const idx = Math.min(Math.round(scroller.scrollLeft / cardW), dots.length - 1);
-    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    const _dots = dotsEl.querySelectorAll('.barbers-dot');
+    const idx = Math.min(Math.round(scroller.scrollLeft / cardW), _dots.length - 1);
+    _dots.forEach((d, i) => d.classList.toggle('active', i === idx));
     if (_braf) return;
     _braf = requestAnimationFrame(() => { _braf = null; updateBarbFocus(); });
   }, {passive:true});
@@ -1122,31 +1125,35 @@ function confirmBooking() {
 
 
 
-// Fetch active barbers from API — new staff appear without code changes; photo lookup uses bid
-fetch('https://barberpilot-api-production.up.railway.app/barberos')
+// Fetch config (servicios + barberos) — prices and roster stay in sync with DB.
+// Full roster replace: deactivated barbers are removed (fixes additive-merge bug).
+fetch('https://barberpilot-api-production.up.railway.app/config/negocio/publico?tenant=saulfino')
   .then(function(r){ return r.json(); })
-  .then(function(list){
-    if (!Array.isArray(list) || !list.length) return;
-    var curBids = BARBERS.map(function(b){ return BARBER_BID[b.id] || ''; });
-    var toAdd   = list.filter(function(b){ return !curBids.includes(b.bid); });
-    if (!toAdd.length) return;
-    var scroller = document.getElementById('barbScroll');
-    var dotsEl   = document.getElementById('barberDots');
-    toAdd.forEach(function(b){
-      BARBERS.push({ id: b.queue_id, bid: b.bid, n: b.nombre.toUpperCase(),
-                     spec: b.spec || 'Cortes · Barba', ini: b.iniciales,
-                     photo: _BARBPHOTOS[b.bid] || null });
-      BARBER_BID[b.queue_id] = b.bid;
-      scroller.insertAdjacentHTML('beforeend',
-        '<div class="bc" data-id="'+b.queue_id+'" onclick="pickBarber('+String.fromCharCode(39)+b.queue_id+String.fromCharCode(39)+')">' +
-        '<div class="bc-av">'+b.iniciales+'</div>' +
-        '<div class="bc-name">'+b.nombre.toUpperCase()+'</div>' +
-        '<div class="bc-spec">'+(b.spec||'Cortes · Barba')+'</div>' +
-        '<button class="bc-btn">AGENDA CON '+b.nombre.toUpperCase()+'</button>' +
-        '</div>');
-      if (dotsEl) dotsEl.insertAdjacentHTML('beforeend',
-        '<div class="barbers-dot" data-i="'+(BARBERS.length-1)+'"></div>');
+  .then(function(json){
+    if (!json.ok) return;
+    var _pById = {};
+    (json.servicios || []).forEach(function(s){ _pById[s.servicio_id] = s.precio_activo; });
+    var _SID = {
+      corte:'s01', barba:'s02', perf_corte:'s05', perf_barba:'s08', perf_cejas:'s06',
+      corte_barba:'s03', corte_perfb:'s04', corte_cejas:'s12', barba_cejas:'s07',
+      mat_cabello:'s09', mat_barba:'s10'
+    };
+    SVCS.forEach(function(svc){
+      var sid = _SID[svc.id];
+      if (sid && _pById[sid] != null) svc.price = _pById[sid];
     });
+    if (Array.isArray(json.barberos) && json.barberos.length) {
+      BARBERS.length = 0;
+      BARBER_BID = {};
+      json.barberos.forEach(function(b){
+        BARBERS.push({ id: b.queue_id, n: b.nombre.toUpperCase(),
+                       spec: b.spec, ini: b.iniciales, color: b.color,
+                       photo: _BARBPHOTOS[b.bid] || null });
+        BARBER_BID[b.queue_id] = b.bid;
+      });
+      renderBarberos();
+      if (typeof window._barbUpdateFocus === 'function') window._barbUpdateFocus();
+    }
   }).catch(function(){});
 </script>
 

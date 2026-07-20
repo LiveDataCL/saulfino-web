@@ -297,16 +297,30 @@ const SVC_BARBERS = {
   disenos:     ['didian','emerson'],
 };
 
-// Fetch active barbers from API — updates BARBERS_DATA and re-renders grid if user is still on step 1
-fetch(API + '/barberos')
+// Fetch config (servicios + barberos) — prices and roster stay in sync with DB.
+fetch(API + '/config/negocio/publico?tenant=saulfino')
   .then(function(r){ return r.json(); })
-  .then(function(list){
-    if (!Array.isArray(list) || !list.length) return;
-    BARBERS_DATA = list.map(function(b){
-      return { id: b.queue_id, bid: b.bid, n: b.nombre.toUpperCase(),
-               spec: b.spec || 'Cortes · Barba', ini: b.iniciales };
+  .then(function(json){
+    if (!json.ok) return;
+    var _pById = {};
+    (json.servicios || []).forEach(function(s){ _pById[s.servicio_id] = s.precio_activo; });
+    var _SID = {
+      corte:'s01', barba:'s02', perf_corte:'s05', perf_barba:'s08', perf_cejas:'s06',
+      corte_barba:'s03', corte_perfb:'s04', corte_cejas:'s12', barba_cejas:'s07',
+      mat_cabello:'s09', mat_barba:'s10'
+    };
+    SVCS_DATA.forEach(function(svc){
+      var sid = _SID[svc.id];
+      if (sid && _pById[sid] != null)
+        svc.price = '$' + _pById[sid].toLocaleString('es-CL');
     });
-    if (step === 1) renderBarbers();
+    if (Array.isArray(json.barberos) && json.barberos.length) {
+      BARBERS_DATA = json.barberos.map(function(b){
+        return { id: b.queue_id, bid: b.bid, n: b.nombre.toUpperCase(),
+                 spec: b.spec, ini: b.iniciales };
+      });
+      if (step === 1) renderBarbers();
+    }
   }).catch(function(){});
 
 // ── State ─────────────────────────────────────────────────────
