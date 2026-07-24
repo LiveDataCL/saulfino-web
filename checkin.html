@@ -338,6 +338,11 @@ input{font-family:var(--ff-b);-webkit-appearance:none}
 .recog-notas{margin-top:10px;padding-top:10px;border-top:1px solid rgba(201,168,76,.15);font-size:12px;color:var(--gold);font-style:italic;line-height:1.5}
 .recog-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .recog-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(201,168,76,.08);color:var(--gold);border:1px solid rgba(201,168,76,.2)}
+.recog-repeat-card{margin-top:12px;padding-top:12px;border-top:1px solid rgba(201,168,76,.15)}
+.recog-repeat-text{font-size:12px;color:var(--g4);line-height:1.5;margin-bottom:8px}
+.recog-repeat-btn{width:100%;min-height:44px;border-radius:var(--r);background:transparent;color:var(--gold);font-size:13px;font-weight:700;letter-spacing:.03em;border:1.5px solid var(--gold);cursor:pointer;transition:all .15s}
+.recog-repeat-btn:active{transform:scale(.97);background:rgba(201,168,76,.08)}
+.barber-unavail-notice{margin-top:8px;padding:8px 12px;border-radius:var(--r);background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);font-size:12px;color:var(--gold);line-height:1.5}
 
 /* Action buttons on confirm */
 .action-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -450,7 +455,11 @@ input{font-family:var(--ff-b);-webkit-appearance:none}
           <div class="recog-name" id="recogName"></div>
           <div class="recog-meta" id="recogMeta"></div>
           <div class="recog-tags" id="recogTags"></div>
-          <div class="recog-notas" id="recogNotas" style="display:none"></div>
+          <div class="recog-repeat-card" id="recogRepeatCard" style="display:none">
+            <div class="recog-repeat-text" id="recogRepeatText"></div>
+            <button type="button" class="recog-repeat-btn" onclick="repetirUltimoServicio()">🔁 Repetir mi último servicio</button>
+            <div class="barber-unavail-notice" id="barberUnavailNotice" style="display:none"></div>
+          </div>
         </div>
         <div class="step-divider">confirma tu nombre</div>
         <!-- Name (required; auto-filled if recognized) -->
@@ -494,27 +503,12 @@ input{font-family:var(--ff-b);-webkit-appearance:none}
         <div class="step-title">Tu bebida<br/>de <em>cortesía</em></div>
         <p class="step-sub">Incluida en cada visita, sin costo adicional.</p>
       </div>
-      <div class="drink-grid">
-        <div class="dopt" data-d="Café ☕" onclick="selectDrink(this)">
-          <div class="d-icon">☕</div>
-          <div class="d-label">Café</div>
-          <div class="d-sublabel">Capuchino o americano</div>
-        </div>
-        <div class="dopt" data-d="Agua 💧" onclick="selectDrink(this)">
-          <div class="d-icon">💧</div>
-          <div class="d-label">Agua fría</div>
-          <div class="d-sublabel">Natural o con gas</div>
-        </div>
-        <div class="dopt" data-d="Bebida fría 🥤" onclick="selectDrink(this)">
-          <div class="d-icon">🥤</div>
-          <div class="d-label">Bebida fría</div>
-          <div class="d-sublabel">Jugo o refresco</div>
-        </div>
-        <div class="dopt" data-d="Sin bebida" onclick="selectDrink(this)">
-          <div class="d-icon">🚫</div>
-          <div class="d-label">Sin bebida</div>
-          <div class="d-sublabel">Gracias de todas formas</div>
-        </div>
+      <!-- Poblado dinámicamente por renderDrinks() desde bebidas_disponibles
+           (GET /config/negocio/publico) — nunca hardcodeado aquí. -->
+      <div class="drink-grid" id="drinkGrid"></div>
+      <div id="bebidaOtroWrap" style="display:none;margin-top:12px">
+        <input class="name-input" type="text" id="inp_bebida_otro"
+               placeholder="¿Cuál?" oninput="onBebidaOtroInput()"/>
       </div>
     </div>
 
@@ -636,13 +630,19 @@ const DEFAULT_META = {time:'', icon:'✂'};
 const SERVICIOS_CACHE_KEY = 'sfw_servicios_cache_v1';
 
 let SERVICES = SERVICES_FALLBACK;
+// Populated from GET /config/negocio/publico's bebidas_disponibles (see
+// loadServicios() below, same fetch call SERVICES already uses) — no
+// hardcoded fallback list, unlike SERVICES_FALLBACK: bebida is an optional
+// courtesy field, so an empty catalog just means "Sin bebida"/"Otro" are the
+// only options offered, not a broken check-in.
+let BEBIDAS_DISPONIBLES = [];
 
 const API = 'https://barberpilot-api-production.up.railway.app';
 
 /* ─────── STATE ─────── */
 let currentStep = 1;
 let totalSteps = 4;
-let state = {name:'', phone:'', barber:null, services:[], drink:null, cliente:null, _prefBarber:null, _prefDrink:null};
+let state = {name:'', phone:'', barber:null, services:[], bebida:null, bebidaEsOtro:false, _bebidaElegida:false, cliente:null, _prefBarbero:null, _prefBebida:null, _prefServicioSnom:null, _repetidoAplicado:false};
 let _phoneLookupTimer = null;
 
 /* ─────── RENDER BARBEROS ─────── */
@@ -714,13 +714,18 @@ async function lookupPhone(phone){
       document.getElementById('inp_name').value = c.nombre;
       state.name = c.nombre;
     }
-    // Store pre-selections for later steps
-    if(c.bid_registro) state._prefBarber = c.bid_registro;
-    // Infer drink from notas
-    const n = (c.notas||'').toLowerCase();
-    if(n.includes('café')||n.includes('cafe')||n.includes('capuchino')) state._prefDrink='Café ☕';
-    else if(n.includes('agua')) state._prefDrink='Agua 💧';
-    else if(n.includes('bebida')||n.includes('jugo')) state._prefDrink='Bebida fría 🥤';
+    // Pre-selections for the explicit "Repetir mi último servicio" button
+    // below — NOT applied automatically to state.barber/state.bebida here.
+    // Previously this auto-selected a barbero via c.bid_registro (which is
+    // actually "who onboarded this client", not an ongoing preference) and
+    // guessed a drink by string-searching c.notas — both replaced by the
+    // real structured fields the lookup route now returns (ultimo_barbero/
+    // ultima_bebida, sourced from the client's actual last completed visit).
+    // c.cumpleanos/c.notas are never present in this response (staff-only,
+    // stripped server-side regardless of confidence tier) — nothing to read here.
+    state._prefBarbero = data.ultimo_barbero || null;
+    state._prefBebida = data.ultima_bebida || null;
+    state._prefServicioSnom = (data.ultimos_servicios && data.ultimos_servicios[0]) ? data.ultimos_servicios[0].snom : null;
     // Build recognition card
     const meta = [];
     if(c.visitas) meta.push(c.visitas+' visita'+(c.visitas===1?'':'s'));
@@ -732,26 +737,108 @@ async function lookupPhone(phone){
     if(data.ultimos_servicios&&data.ultimos_servicios.length) meta.push(data.ultimos_servicios[0].snom);
     document.getElementById('recogName').textContent = c.nombre;
     document.getElementById('recogMeta').textContent = meta.join(' · ');
-    // Tags: DOB, visit count, preferred barber
+    // Tags: visit count, most frequent services (no ids, no barbero/cumpleanos
+    // — those aren't in this response at all, see the comment above)
     const tags = [];
-    if(c.cumpleanos) tags.push('🎂 '+c.cumpleanos);
-    if(c.bid_registro) tags.push('✂ '+c.bid_registro.charAt(0).toUpperCase()+c.bid_registro.slice(1));
     if(c.servicios_frecuentes&&c.servicios_frecuentes.length) c.servicios_frecuentes.slice(0,3).forEach(s=>tags.push(s));
     document.getElementById('recogTags').innerHTML = tags.map(t=>`<span class="recog-tag">${t}</span>`).join('');
-    const nEl = document.getElementById('recogNotas');
-    if(c.notas){ nEl.textContent = '📋 '+c.notas; nEl.style.display='block'; } else { nEl.style.display='none'; }
+    // "Repetir mi último servicio" card — only offered when there's an
+    // actual last service to repeat.
+    const repeatCard = document.getElementById('recogRepeatCard');
+    if(state._prefServicioSnom){
+      let txt = state._prefServicioSnom;
+      if(state._prefBarbero) txt += ' con ' + state._prefBarbero;
+      if(state._prefBebida) txt += ' · ' + state._prefBebida;
+      document.getElementById('recogRepeatText').textContent = txt;
+      document.getElementById('barberUnavailNotice').style.display='none';
+      repeatCard.style.display='block';
+    } else {
+      repeatCard.style.display='none';
+    }
     document.getElementById('recogCard').style.display='block';
     updateNextBtn();
   } catch(e){}
 }
 
 function clearRecog(){
-  state.cliente=null; state._prefBarber=null; state._prefDrink=null;
+  state.cliente=null; state._prefBarbero=null; state._prefBebida=null; state._prefServicioSnom=null;
   document.getElementById('recogCard').style.display='none';
+  document.getElementById('recogRepeatCard').style.display='none';
+}
+
+// Explicit opt-in pre-fill, triggered by tapping "Repetir mi último
+// servicio" — never automatic. Pre-fills service + bebida unconditionally;
+// barbero only if their usual barbero is currently available (same
+// .available flag renderBarbers() already gates click-selection on) —
+// otherwise shows a clear notice and leaves barbero selection to the client,
+// rather than silently reassigning or blocking check-in.
+function repetirUltimoServicio(){
+  state._repetidoAplicado = true;
+  if(state._prefServicioSnom){
+    const svcMatch = SERVICES.find(s=>s.name===state._prefServicioSnom);
+    if(svcMatch){
+      state.services=[];
+      document.querySelectorAll('.sci.checked').forEach(el=>el.classList.remove('checked'));
+      document.getElementById('svcTotalRow').style.display='none';
+      toggleService(svcMatch.id, svcMatch.price);
+    }
+  }
+  if(state._prefBebida){
+    const drinkMatch = document.querySelector(`.dopt[data-b="${CSS.escape(state._prefBebida)}"]`);
+    if(drinkMatch) selectDrink(drinkMatch);
+  }
+  const notice = document.getElementById('barberUnavailNotice');
+  if(state._prefBarbero){
+    const barberMatch = BARBEROS.find(b=>b.name===state._prefBarbero);
+    if(barberMatch && barberMatch.available){
+      selectBarber(barberMatch.id);
+      notice.style.display='none';
+    } else if(barberMatch && !barberMatch.available){
+      notice.textContent = 'Tu barbero habitual no está disponible ahora — elige uno abajo.';
+      notice.style.display='block';
+    }
+  }
+  updateNextBtn();
+}
+
+// Undoes whatever repetirUltimoServicio() actually applied (service/bebida/
+// barbero), distinct from clearRecog() below — clearRecog() only clears the
+// *candidate* pref fields and hides the cards, which is enough if Repetir was
+// never tapped. If it WAS tapped, those selections are live in
+// state.services/state.bebida/state.barber, not just pending, and need to be
+// actively reset — otherwise editing the name away from the recognized
+// client would leave a stranger's last service/bebida/barbero silently
+// applied through to submission.
+function _deshacerRepetir(){
+  state.services = [];
+  document.querySelectorAll('.sci.checked').forEach(el=>el.classList.remove('checked'));
+  document.getElementById('svcTotalRow').style.display='none';
+
+  state.bebida = null;
+  state.bebidaEsOtro = false;
+  state._bebidaElegida = false;
+  document.querySelectorAll('.dopt.selected').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('bebidaOtroWrap').style.display='none';
+
+  state.barber = null;
+  document.querySelectorAll('.bc-item.selected').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('barberList').classList.remove('has-sel');
+  document.getElementById('barberUnavailNotice').style.display='none';
+
+  state._repetidoAplicado = false;
 }
 
 function onNameInput(){
-  state.name = document.getElementById('inp_name').value.trim();
+  const val = document.getElementById('inp_name').value.trim();
+  state.name = val;
+  // Client edited the name away from what phone-lookup recognized — the
+  // pending/applied "repetir" data belonged to whoever the phone matched,
+  // not necessarily whoever is now typing. Undo anything already applied,
+  // then clear the recognition UI and candidate pref fields.
+  if(state.cliente && val !== state.cliente.nombre){
+    if(state._repetidoAplicado) _deshacerRepetir();
+    clearRecog();
+  }
   updateNextBtn();
 }
 
@@ -788,10 +875,28 @@ function toggleService(id, price){
 }
 
 /* ─────── DRINK ─────── */
+// data-b values: a catalog name from bebidas_disponibles, '' (Sin bebida —
+// a real, explicit choice, distinct from "hasn't chosen yet"), or '__otro__'
+// (free text, see inp_bebida_otro below).
 function selectDrink(el){
   document.querySelectorAll('.dopt').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected');
-  state.drink = el.dataset.d;
+  const val = el.dataset.b;
+  state._bebidaElegida = true;
+  const otroWrap = document.getElementById('bebidaOtroWrap');
+  if(val==='__otro__'){
+    state.bebidaEsOtro = true;
+    state.bebida = (document.getElementById('inp_bebida_otro').value||'').trim();
+    otroWrap.style.display='block';
+  } else {
+    state.bebidaEsOtro = false;
+    state.bebida = val || null;
+    otroWrap.style.display='none';
+  }
+  updateNextBtn();
+}
+function onBebidaOtroInput(){
+  state.bebida = (document.getElementById('inp_bebida_otro').value||'').trim();
   updateNextBtn();
 }
 
@@ -807,7 +912,7 @@ function updateNextBtn(){
   if(currentStep===1) ok = state.name.length>=2;
   if(currentStep===2) ok = !!state.barber;
   if(currentStep===3) ok = state.services.length>0;
-  if(currentStep===4) ok = !!state.drink;
+  if(currentStep===4) ok = state._bebidaElegida && (!state.bebidaEsOtro || !!state.bebida);
   btn.disabled = !ok;
 }
 
@@ -842,17 +947,38 @@ function showStep(n){
   document.getElementById('bottomNav').style.display = n===5?'none':'flex';
   const hero = document.getElementById('stepHero');
   if(hero) hero.classList.toggle('visible', n===1);
-  // Apply pre-fills from returning customer recognition
-  if(n===2 && state._prefBarber) selectBarber(state._prefBarber);
-  if(n===4 && state._prefDrink){
-    const dopt = document.querySelector(`.dopt[data-d="${state._prefDrink}"]`);
-    if(dopt) selectDrink(dopt);
-  }
+  // Pre-fills are no longer auto-applied on step entry — the client opts in
+  // via the "Repetir mi último servicio" button (repetirUltimoServicio()),
+  // which includes the barbero-availability check task H requires. Silently
+  // auto-selecting here (the old behavior) bypassed that check entirely,
+  // since selectBarber() itself doesn't gate on .available — only the
+  // click handler in renderBarbers() did.
   updateNextBtn();
   window.scrollTo(0,0);
 }
 
 async function submitCheckin(){
+  // Defensive re-check, on top of the one already done at "Repetir" time:
+  // the selected barbero (whether pre-filled or manually picked) may have
+  // gone from available to unavailable while the client filled out the
+  // rest of the form. Never silently reassign or submit for them — send
+  // back to step 2 with a clear notice instead.
+  if(state.barber && state.barber.id!=='any'){
+    const stillThere = BARBEROS.find(b=>b.id===state.barber.id);
+    if(!stillThere || !stillThere.available){
+      state.barber = null;
+      document.querySelectorAll('.bc-item').forEach(el=>el.classList.remove('selected'));
+      const notice = document.getElementById('barberUnavailNotice');
+      if(notice){
+        notice.textContent = 'Tu barbero ya no está disponible — elige otro para continuar.';
+        notice.style.display='block';
+      }
+      currentStep = 2;
+      showStep(2);
+      return;
+    }
+  }
+
   const barberName = state.barber ? (state.barber.id==='any'?'Próximo disponible':state.barber.name) : '—';
   const svcNames = state.services.map(s=>SERVICES.find(sv=>sv.id===s.id)?.name||s.id).join(' + ');
   const total = state.services.reduce((a,s)=>a+s.price,0);
@@ -867,7 +993,7 @@ async function submitCheckin(){
     document.getElementById('cc_client').textContent = state.name;
     document.getElementById('cc_barber').textContent = assignedBarberDisplay;
     document.getElementById('cc_services').textContent = svcNames;
-    document.getElementById('cc_drink').textContent = state.drink||'—';
+    document.getElementById('cc_drink').textContent = state.bebida||'Sin bebida';
     document.getElementById('cc_total').textContent = '$'+total.toLocaleString('es-CL');
     document.getElementById('wt_min').textContent = waitMin!=null?'~'+waitMin:'—';
     const waMsg = `✅ Check-in: ${state.name} · ${assignedBarberDisplay} · ${svcNames}`;
@@ -878,7 +1004,7 @@ async function submitCheckin(){
     const res = await fetch(API+'/queue/checkin', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({client_name:state.name, phone:state.phone||null, barber_id:barberIdToSend, service:svcNames, drink:state.drink})
+      body:JSON.stringify({client_name:state.name, phone:state.phone||null, barber_id:barberIdToSend, service:svcNames, bebida:state.bebida||null, bebida_es_otro:!!state.bebidaEsOtro})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
@@ -973,6 +1099,36 @@ function mapServiciosResponse(servicios){
   });
 }
 
+// data-b carries the exact catalog string (validated server-side against
+// bebidas_disponibles on submit) — '' for "Sin bebida", '__otro__' for free
+// text. Preserves the current selection across re-renders (e.g. if the
+// catalog refreshes while step 4 is already showing).
+function renderDrinks(){
+  const grid = document.getElementById('drinkGrid');
+  if(!grid) return;
+  const prevSelected = grid.querySelector('.dopt.selected');
+  const prevVal = prevSelected ? prevSelected.dataset.b : undefined;
+  let h = BEBIDAS_DISPONIBLES.map(b=>`
+    <div class="dopt" data-b="${b}" onclick="selectDrink(this)">
+      <div class="d-icon">☕</div>
+      <div class="d-label">${b}</div>
+    </div>`).join('');
+  h += `
+    <div class="dopt" data-b="__otro__" onclick="selectDrink(this)">
+      <div class="d-icon">✏️</div>
+      <div class="d-label">Otro</div>
+    </div>
+    <div class="dopt" data-b="" onclick="selectDrink(this)">
+      <div class="d-icon">🚫</div>
+      <div class="d-label">Sin bebida</div>
+    </div>`;
+  grid.innerHTML = h;
+  if(prevVal!==undefined){
+    const stillThere = grid.querySelector(`.dopt[data-b="${CSS.escape(prevVal)}"]`);
+    if(stillThere) stillThere.classList.add('selected');
+  }
+}
+
 function showStaleBanner(fechaTexto){
   const el = document.getElementById('svcStaleBanner');
   if(!el) return;
@@ -1014,6 +1170,7 @@ async function loadServicios(){
       throw new Error('respuesta inesperada');
     }
     SERVICES = mapServiciosResponse(data.servicios);
+    if(Array.isArray(data.bebidas_disponibles)) BEBIDAS_DISPONIBLES = data.bebidas_disponibles;
     const nowIso = new Date().toISOString();
     localStorage.setItem(SERVICIOS_CACHE_KEY, JSON.stringify({servicios:data.servicios, fecha:nowIso}));
     hideStaleBanner();
@@ -1027,6 +1184,7 @@ async function loadServicios(){
     showStaleBanner(fechaTexto);
   }
   renderServices();
+  renderDrinks();
 }
 
 /* ─────── INIT ─────── */
