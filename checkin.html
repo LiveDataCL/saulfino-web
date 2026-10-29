@@ -45,7 +45,7 @@ input{font-family:var(--ff-b);-webkit-appearance:none}
 ::-webkit-scrollbar{display:none}
 
 /* SCREENS */
-.screen{display:none;min-height:100dvh;animation:fadeUp .3s ease both}
+.screen{display:none;min-height:100dvh;animation:fadeUp .3s ease backwards}   /* backwards, NOT both: "both" keeps transform:translateY(0) after the animation, and a transformed ancestor traps position:fixed children (the bottom bar sat at the end of the page, below the fold on phones) */
 .screen.active{display:flex;flex-direction:column}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
