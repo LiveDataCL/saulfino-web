@@ -1,0 +1,17 @@
+{
+  "name": "Salón Men Saúl Fino · Barberos",
+  "short_name": "Salón Men",
+  "description": "Hoy, cifras y cola de Salón Men Saúl Fino",
+  "start_url": "./barber.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0d07",
+  "theme_color": "#0f0d07",
+  "lang": "es",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -6,6 +6,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Salón Men">
+<meta name="theme-color" content="#0f0d07">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Salón Men Barberos">
 <meta name="theme-color" content="#1a1916">
 <title>Salón Men Barberos</title>
@@ -365,6 +370,9 @@ html,body{
   animation:spin .65s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
+.pin-maestro-link{display:block;margin:14px auto 0;min-height:44px;background:none;border:none;color:var(--gold,#C9A84C);text-decoration:underline;font-size:14px;cursor:pointer}
+.pin-maestro-count{text-align:center;color:#8a8478;font-size:13px;min-height:18px;margin-top:6px}
+.pin-maestro-entrar{display:block;width:100%;max-width:260px;margin:12px auto 0;min-height:44px;background:var(--gold,#C9A84C);color:#0f0d07;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
 </style>
 </head>
 <body>
@@ -405,6 +413,9 @@ html,body{
     <button class="pin-key del" onclick="pinDel()">⌫</button>
   </div>
   <div class="pin-err" id="loginErr"></div>
+  <button id="maestroLink" class="pin-maestro-link" onclick="togglMaestro()" type="button">Usar PIN maestro</button>
+  <div id="maestroCount" class="pin-maestro-count"></div>
+  <button id="maestroEntrar" class="pin-maestro-entrar" onclick="doLoginMaestro()" type="button" style="display:none">Entrar</button>
 </div>
 
 <!-- ───────── SETUP PIN ──────────────────────────────────── -->
@@ -685,16 +696,37 @@ function selBarber(el){
 
 /* ── PIN input — login ───────────────────────────────────── */
 function syncDots(buf, prefix){
+  if(prefix==='pd' && _maestro){
+    document.getElementById('maestroCount').textContent = buf.length ? buf.length + ' dígito' + (buf.length===1?'':'s') : '';
+    for(var j=0;j<4;j++) document.getElementById(prefix+j).classList.toggle('filled', j < Math.min(buf.length,4));
+    return;
+  }
   for(var i=0;i<4;i++){
     document.getElementById(prefix+i).classList.toggle('filled', i < buf.length);
   }
 }
 
+// Master PIN mode (Usar PIN maestro): 4 to 8 digits, sent with Entrar. The server decides whether it opens the profile:
+// only the first-login fallback (a barber with no PIN) and the existing master override on a barber row (TD-024 batch 2).
+var _maestro = false;
+function togglMaestro(){
+  _maestro = !_maestro;
+  resetLoginPin();
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('maestroLink').textContent = _maestro ? 'Usar PIN del barbero' : 'Usar PIN maestro';
+  document.getElementById('maestroEntrar').style.display = _maestro ? 'block' : 'none';
+  syncDots('','pd');
+}
 function pinKey(k){
-  if(_pinBuf.length >= 4) return;
+  var max = _maestro ? 8 : 4;
+  if(_pinBuf.length >= max) return;
   _pinBuf += k;
   syncDots(_pinBuf,'pd');
-  if(_pinBuf.length === 4) doLogin();
+  if(!_maestro && _pinBuf.length === 4) doLogin();
+}
+function doLoginMaestro(){
+  if(_pinBuf.length < 4){ document.getElementById('loginErr').textContent = 'El PIN tiene 4 a 8 dígitos.'; return; }
+  doLogin();
 }
 
 function pinDel(){
@@ -732,7 +764,9 @@ function doLogin(){
         enterDash();
       }
     } else if(res.s===429){
-      errEl.textContent = res.j.message || 'Demasiados intentos. Espera 1 minuto.';
+      errEl.textContent = 'Demasiados intentos. Espera 15 minutos.';
+    } else if(res.s===403 && res.j.error==='pin_maestro_no_permitido'){
+      errEl.textContent = 'Este PIN no abre tu perfil. Pide al administrador que restablezca tu PIN.';
     } else {
       errEl.textContent = 'PIN incorrecto. Intenta de nuevo.';
     }
