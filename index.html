@@ -1209,7 +1209,8 @@ fetch('https://barberpilot-api-production.up.railway.app/config/negocio/publico?
     if(Date.now() - q.checkinAt > EXPIRE_MS){ clear(); hideBanner(); return; }
 
     try{
-      const r = await fetch(`${API}/queue/${q.id}`);
+      if(!q.t){ return; }   // an entry without its token cannot be read by a customer
+      const r = await fetch(`${API}/queue/${q.id}?t=${encodeURIComponent(q.t)}`);
       if(!r.ok){ return; } // keep showing last known state, retry next tick
       const data = await r.json();
       if(!data.ok || !data.entry){ return; }

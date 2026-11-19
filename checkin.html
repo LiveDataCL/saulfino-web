@@ -1122,6 +1122,7 @@ async function submitCheckin(){
     try {
       localStorage.setItem('smsf_queue', JSON.stringify({
         id: data.entry.id,
+        t: data.entry.acceso_token || null,   // the customer's own access token (TD-024): the only way to read this entry
         name: state.name,
         barber: assignedDisplay,
         service: svcNames,
