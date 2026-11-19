@@ -373,6 +373,10 @@ html,body{
 .pin-maestro-link{display:block;margin:14px auto 0;min-height:44px;background:none;border:none;color:var(--gold,#C9A84C);text-decoration:underline;font-size:14px;cursor:pointer}
 .pin-maestro-count{text-align:center;color:#8a8478;font-size:13px;min-height:18px;margin-top:6px}
 .pin-maestro-entrar{display:block;width:100%;max-width:260px;margin:12px auto 0;min-height:44px;background:var(--gold,#C9A84C);color:#0f0d07;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
+.dash-periodo{display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0 4px}
+.per-btn{min-height:44px;min-width:96px;padding:0 16px;border-radius:12px;border:1px solid rgba(201,168,76,.35);background:transparent;color:#c9a84c;font-size:14px;cursor:pointer}
+.per-btn.on{background:#c9a84c;color:#0f0d07;border-color:#c9a84c;font-weight:600}
+.per-mes{min-height:44px;border-radius:12px;border:1px solid rgba(201,168,76,.35);background:#1a1916;color:#f5f4f0;padding:0 12px;font-size:14px}
 </style>
 </head>
 <body>
@@ -463,6 +467,11 @@ html,body{
 
   <div class="offline-banner" id="offlineBanner">Sin conexión · Registro deshabilitado</div>
 
+  <div class="dash-periodo">
+    <button class="per-btn on" id="btnHoy" onclick="setPeriodo('hoy')" type="button">Hoy</button>
+    <button class="per-btn" id="btnMes" onclick="setPeriodo('mes')" type="button">Mes</button>
+    <select class="per-mes" id="selMes" onchange="loadDash()" style="display:none"></select>
+  </div>
   <div class="dash-stats">
     <div class="stat-card"><div class="stat-val" id="sSvc">—</div><div class="stat-lbl">Servicios</div></div>
     <div class="stat-card"><div class="stat-val" id="sFact">—</div><div class="stat-lbl">Facturado</div></div>
@@ -479,7 +488,7 @@ html,body{
 
   <div class="dash-sec">
     <div class="sec-hdr">
-      <div class="sec-ttl">Servicios de hoy</div>
+      <div class="sec-ttl" id="svcTtl">Servicios de hoy</div>
       <div class="sec-badge" id="svcBadge"></div>
     </div>
     <div id="svcList"><div class="empty-msg">Sin registros aún</div></div>
@@ -847,8 +856,33 @@ function enterDash(){
   _dashTimer = setInterval(loadDash, 30000);
 }
 
+var _vista = 'hoy';
+function mesesRecientes(){
+  var sel = document.getElementById('selMes');
+  if(sel.options.length) return;
+  var nombres = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var hoy = new Date();
+  for(var i=0;i<12;i++){
+    var d = new Date(hoy.getFullYear(), hoy.getMonth()-i, 1);
+    var v = d.getFullYear()+'-'+pad(d.getMonth()+1);
+    var o = document.createElement('option');
+    o.value = v; o.textContent = nombres[d.getMonth()]+' '+d.getFullYear();
+    sel.appendChild(o);
+  }
+}
+function setPeriodo(v){
+  _vista = v;
+  document.getElementById('btnHoy').classList.toggle('on', v==='hoy');
+  document.getElementById('btnMes').classList.toggle('on', v==='mes');
+  var sel = document.getElementById('selMes');
+  if(v==='mes'){ mesesRecientes(); sel.style.display = ''; } else { sel.style.display = 'none'; }
+  loadDash();
+}
 function loadDash(){
-  var p1 = fetch(API+'/barbero/'+_bid+'/hoy',{headers:authHdr()})
+  var url = _vista==='mes'
+    ? API+'/barbero/'+_bid+'/mes/'+document.getElementById('selMes').value
+    : API+'/barbero/'+_bid+'/hoy';
+  var p1 = fetch(url,{headers:authHdr()})
     .then(function(r){
       if(r.status===401){ handle401(); throw new Error('401'); }
       return r.json();
@@ -885,6 +919,7 @@ function renderStats(d){
 function renderSvcList(d){
   if(!d||!d.ok) return;
   var regs = d.registros || [];
+  document.getElementById('svcTtl').textContent = _vista==='mes' ? 'Servicios del mes' : 'Servicios de hoy';
   document.getElementById('svcBadge').textContent = regs.length || '';
   var el = document.getElementById('svcList');
   if(!regs.length){ el.innerHTML='<div class="empty-msg">Sin registros aún</div>'; return; }
