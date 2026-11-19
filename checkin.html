@@ -752,6 +752,17 @@ async function lookupPhone(phone){
     if(!res.ok) return;
     const data = await res.json();
     if(!data.found){ clearRecog(); return; }
+    // Public response (no staff session): only that the client is known and the visit count. No name, no history (TD-024).
+    if(!data.cliente){
+      state.cliente = null;
+      document.getElementById('recogName').textContent = 'Cliente conocido';
+      document.getElementById('recogMeta').textContent = (data.visitas||0)+(data.visitas===1?' visita':' visitas');
+      document.getElementById('recogTags').innerHTML = '';
+      document.getElementById('recogRepeatCard').style.display='none';
+      document.getElementById('recogCard').style.display='block';
+      updateNextBtn();
+      return;
+    }
     const c = data.cliente;
     state.cliente = c;
     // Auto-fill name if empty
