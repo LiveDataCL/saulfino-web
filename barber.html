@@ -813,7 +813,7 @@ function enterDash(){
 }
 
 function loadDash(){
-  var p1 = fetch(API+'/barbero/'+_bid+'/hoy')
+  var p1 = fetch(API+'/barbero/'+_bid+'/hoy',{headers:authHdr()})
     .then(function(r){
       if(r.status===401){ handle401(); throw new Error('401'); }
       return r.json();
