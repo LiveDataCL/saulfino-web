@@ -706,7 +706,7 @@ function renderBarbers(){
 
 async function initBarberStatus(){
   try{
-    const res = await fetch(API+'/queue');
+    const res = await fetch(API+'/api/v2/publico/cola');
     if(!res.ok) return;
     const data = await res.json();
     const sum = (data.summary && data.summary.barbers) || {};
@@ -1150,7 +1150,7 @@ async function submitCheckin(){
 
 async function fetchLiveQueue(myPos){
   try {
-    const res = await fetch(API+'/queue');
+    const res = await fetch(API+'/api/v2/publico/cola');
     if(!res.ok) return;
     const data = await res.json();
     const queue = data.queue || [];
